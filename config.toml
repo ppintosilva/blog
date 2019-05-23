@@ -1,0 +1,54 @@
+baseurl = "https://blog.ppintosilva.com"
+languageCode = "en-uk"
+
+title = "What are the odds?"
+subtitle = "Data Science with Pedro"
+theme = "hugo-lithium"
+
+copyright = "&copy; 2019 Pedro Pinto da Silva"
+
+googleAnalytics = ""
+disqusShortname = ""
+
+ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+
+enableEmoji = true
+
+[author]
+    name = "Pedro Pinto da Silva"
+
+[permalinks]
+    post = "/:year/:month/:day/:slug/"
+
+[[menu.main]]
+    name = "About"
+    url = "/about/"
+
+[[menu.main]]
+    name = "Posts"
+    url = "/post/"
+
+[[menu.main]]
+    name = "Tags"
+    url = "/tags/"
+
+[params]
+    description = "Thoughts, ramblings and experiments in Data Science (stats \u2229 computing)"
+
+    # options for highlight.js (version, additional languages, and theme)
+    highlightjsVersion = "9.12.0"
+    highlightjsCDN = "//cdnjs.cloudflare.com/ajax/libs"
+    highlightjsLang = ["r", "yaml"]
+    highlightjsTheme = "github"
+
+    MathJaxCDN = "//cdnjs.cloudflare.com/ajax/libs"
+    MathJaxVersion = "2.7.5"
+
+    # path to the favicon, under "static"
+    favicon = "favicon.ico"
+
+    [params.logo]
+    url = "logo.png"
+    width = 50
+    height = 50
+    alt = "Logo"
