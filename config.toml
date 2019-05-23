@@ -7,8 +7,8 @@ theme = "hugo-lithium"
 
 copyright = "&copy; 2019 Pedro Pinto da Silva"
 
-googleAnalytics = ""
-disqusShortname = ""
+googleAnalytics = "UA-140689661-1"
+disqusShortname = "ppintosilva "
 
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
