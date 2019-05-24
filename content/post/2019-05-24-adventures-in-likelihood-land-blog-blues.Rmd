@@ -1,0 +1,626 @@
+---
+title: 'Adventures in Likelihood: Blog Blues'
+author: "Pedro Pinto da Silva"
+date: '2019-05-24'
+slug: adventures-in-likelihood-land-blog-blues
+categories: []
+tags: ['stats-101', 'book-lambert']
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache =TRUE)
+library(tidyverse)
+library(gganimate)
+```
+
+---
+
+In this post, we look at problem 4.1 from Ben Lambert's book _A Student's Guide to Bayesian Statistics_. This is meant to be a very introductory exercise, aimed mostly at begginers taking the first steps on the long road towards Bayesian statistics.
+
+Our focus is on the **likelihood** (function), the power house of statistics, used by both Frequentists and Bayesians alike. Ben Lambert's book does an excellent job at explaining the **likelihood**, and also other key concepts in probability theory such as probability mass, density, conditional probability and joint probability distributions. More, he tells you what models are, what they are useful for and whyl! All things that seasoned statisticians take for granted, but that can be hard for begginers to grasp, unless stated clearly and explicitly using a diverse bag of examples.
+
+Understanding the **likelihood** is hence a critical milestone on the very long road to mastering Bayesian Statistics!
+
+Seriously, I can't recommend the [book](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/) enough.
+
+# The Problem
+
+We're interested in the behavior of new users visiting our website. We do this by looking at the time between events (i.e. first-visits).
+
+Let $D_i$ be the random variable that represents our quantity of interest: the time between the $i$th and the $i+1$th first visits to our website.
+
+In this instance of the problem, our dataset consists of intra-arrival times $d_i = t_{i+1} - t_{i}, \forall i \in 1,..,n$, with $n = 50$.
+
+```{r eventplot, echo  = FALSE, fig.cap="Event plot: times $t$ and intra-arrival times $d$.", fig.height = 3, fig.width = 6, fig.align = "center"}
+events <- 
+  tibble(
+    time        = c(1,2,3,4),
+    time_labels = as.factor(c("t[1]", "t[2]", "t[3]", "t[4]")),
+    d           = c(1, 1.5, 2.5, 3.5),
+    d_labels    = c("", "d[1]", "d[2]", "d[3]"))
+
+events %>%
+  ggplot() +
+  geom_segment(aes(x = time, xend = time, y = -1, yend = 1), color = "#5D8AA8", lwd = 1.5) +
+  geom_segment(aes(x = 1, xend = 4, y = 0, yend = 0)) +
+  geom_text(aes(x = time, y = -1.5, label = time_labels), size = 6, parse = T) +
+  geom_text(aes(x = d, y = 1.5, label = d_labels), size = 6, parse = T) +
+  ylim(-1.8,1.8) +
+  theme_void()
+  
+```
+
+Our goal is to **explain** the behavior of new traffic to our website using a statistical model for $D_i$. More formally, we're interested in the joint probability distribution (p.d.):
+
+$$
+p(D_1, D_2, \ldots, D_{n} \mid \theta_1, \theta_2, \ldots, \theta_n, \text{Model}) = ?
+$$
+
+where $\theta_i$ is the parameter set associated with $D_i$. Conditioning on the Model is typically done implicitly, and hence does not show up in the statement above. A more compact way to write a series of random variables $X_1, X_2, \ldots, X_n$ is $X_{1:n}$. A more condensed way of writing the joint p.d. of interest is therefore:
+
+$$
+p(D_{1:n} \mid \theta_{1:n}) = ?
+$$
+
+# Assumptions
+
+In order to compute the joint p.d., we have to make assumptions about our problem. There are two very commonly used assumptions that greatly simplify the structure of the joint distribution, and allow for a simple model to be easily computed. The resulting model might not be the most realistic one, but it can be useful, especially as a first model.
+
+## Independence
+
+A natural assumption is that first-visits occur independently of each other. Knowing when one user's first visit occurred, tells us nothing about another user's first visit. This allows us to simplify the joint distribution $p(D_1, D_2, \ldots, D_n \mid \theta_1, \theta_2, \ldots, \theta_n)$, as the product of the marginal distributions $p(D_i \mid \theta_i)$:
+
+$$
+p(D_{1:n} \mid \theta_{1:n}) = p(D_1 \mid \theta_1) \times p(D_2 \mid \theta_2) \times \ldots
+\times p(D_n \mid \theta_n)
+$$
+
+## Identically distributed
+
+A second assumption is that users visiting our website come from the same population and therefore share the same characteristics, which are represented by our model's parameters: $\theta_1,\theta_2,\ldots,\theta_n$.
+
+Saying that $D_1,D_2,\ldots,D_n$ are identically distributed, implies that the data generation process behind $D_1$ is the same as $D_2, D_3, \ldots, D_n$. This means that the same probability distribution is used to model $p(D_1 \mid \theta_1)$, $p(D_2 \mid \theta_2)$, $\ldots$, $p(D_n \mid \theta_n)$. If the probability model is the same, then:
+
+$\theta = \theta_1 = \theta_2 = \ldots = \theta_n$
+
+The intuition being that the population's characteristics are representing using a single set of parameters $\theta$, shared across all individuals.
+
+The joint distribution therefore simplifies to:
+
+$$
+p(D_{1:n} \mid \theta_{1:n}) = p(D_{1:n} \mid \theta) = \prod_{i=1}^{n} p(D_i \mid \theta)
+$$
+
+In many problems, the assumptions of mutually independent and identically distributed random variables often come bundled together. Such collections of random variables are said to be _iid_. This greatly simplifies the calculation of the **likelihood** function, as we will see below.
+
+# Probability model
+
+To pick a probability model, we write down what we know about our random variable(s), and we look for probability distributions with matching properties.
+
+In this instance, our r.v. represents time. What we know about time:
+
+- It's **continuous**
+- Takes values within the range $[0, \infty)$
+
+That's only a couple of bullet points, but it removes from our list of potential probability distributions all p.d.s that are discrete and that are continuous with density outside this range. That includes p.d.s whose density may be negative (e.g. Normal), or bounded within $R_{0+}$ (e.g. Beta).
+
+A **p.d.**  commonly used to represent the time before or between events, is the *exponential distribution*. It has a single parameter $\lambda$, which represents the frequency of events (rate at which users visit the website for the first time, e.g. every 5 minutes). Its probability density function (p.d.f) is given by:
+
+$$
+p(X = x \mid \lambda) = \lambda e^{-\lambda x}, \quad x \in [0, \infty)
+$$
+
+Other notation can be used to specify the probability density function: $p(x \mid \lambda)$, $p(x; \lambda)$, $p_X(x)$, and $f$ is also used instead of $p$.
+
+As $p$ is a density, we get probability mass by integrating $p$ over $x$:
+
+$$
+Pr(X \leq x \mid \lambda) = \int_{0}^{x} p(X = x \mid \lambda) \ dx
+$$
+
+We can see that if we fix $\lambda$ and vary $x$, then we have a valid probability distribution:
+
+$$
+\int_{-\infty}^{\infty} p(X = x \mid \lambda) \, dx = \int_{0}^{\infty} \lambda e^{-\lambda x} \, dx = - \big[ e^{-\lambda x} \big]^{\infty}_{0} = - \big[ 0 - 1] = 1
+$$
+
+We can plot the **pdf** for different values of $\lambda$ (fig. \@ref(fig:expPdf)):
+
+```{r expPdf, fig.cap="Probability density function (pdf) of the exponential distribution for different values of $\\lambda$. $x$ represents time before an event."}
+lambdas  <- c(0.5, 2, 5)
+x        <- seq(0, 8, 0.01)
+
+rlambdas <-
+  lapply(lambdas,
+         function(lambda) rep(lambda, length(x))) %>%
+  flatten_dbl()
+
+tibble(
+  x      = rep(x,
+               length(lambdas)),
+  lambda = rlambdas
+) %>%
+  mutate(p      = dexp(x, lambda)) %>%
+  mutate(lambda = as.factor(lambda)) %>%
+  ggplot() +
+  geom_line(
+    aes(x      = x,
+        y      = p,
+        colour = lambda
+    ),
+    lwd   = 1.5,
+    alpha = .8
+  ) +
+  ylab("probability density") +
+  theme_bw()
+```
+
+If we instead consider the data fixed, we obtain the likelihood function which is a function of the parameter $\lambda$ with the data $x$ held fixed:
+
+$$
+L(\lambda \mid x) = p(X = x \mid \lambda)
+$$
+
+To quote Ben Lambert:
+
+> "We call the above the _equivalence relation_, since a likelihood of $\theta$ for a particular data sample is equivalent to the probability of that data sample for that value of $\theta$."
+
+So, for a single data sample of $x = 0.5$, we can calculate it's **likelihood** by calculating $L(\lambda \mid x = 0.5) = p(0.5 \mid \lambda)$ for a range of values of $\lambda$. This just amounts to pluging the same value of $x$ and different values of $\lambda$ into the **pdf**!
+
+I try to demonstrate this in the following animation (fig \@ref(fig:likelihoodAnim)):
+
+```{r likelihoodAnim, fig.cap="Computing the likelihood function for a single observation $x=0.5$."}
+x          <- seq(0, 8, 0.01)
+lambdas    <- seq(0.25, 8, 0.25)
+
+rlambdas <-
+  lapply(lambdas,
+         function(lambda) rep(lambda, length(x))) %>%
+  flatten_dbl()
+
+df <- tibble(
+  x        = rep(x,
+                 length(lambdas)),
+  lambda   = rlambdas
+) %>%
+  mutate(p = dexp(x, lambda)) %>%
+  mutate(label = paste0("L(", lambda, " | ", x,") = ", round(p, digits = 3)))
+
+x_track = 0.5
+
+anim_p = 
+  df %>%
+  ggplot() +
+  geom_line(
+    aes(
+      x = x,
+      y = p,
+      colour = lambda,
+      group = lambda
+    )
+  ) +
+  geom_vline(
+    xintercept = x_track,
+    colour     = "red" 
+  ) +
+  geom_point(
+    aes(
+      x = x_track,
+      y = dexp(x_track, lambda)
+    ),
+    colour = "black",
+    size   = 5
+  ) +
+  geom_label(
+    aes(
+      label = paste0("L(lambda=",
+                     sprintf("%.3f", round(lambda, digits = 3)),
+                     " | x=", x_track,") = ",
+                     round(dexp(x_track, lambda), digits = 3)),
+      x = x_track + 0.5,
+      y = dexp(x_track, lambda) + 0.2
+    ),
+    size = 4,
+    hjust = 0,
+  ) +
+  annotate(
+    "text",
+    label = paste0("x=", x_track),
+    x = x_track + 0.2,
+    y = 7,
+    size = 5,
+    colour = "red",
+    hjust = 0
+  ) +
+  theme_bw() +
+  # Here comes the gganimate specific bits
+  labs(
+    # title = paste0('x =', x_track, ', lambda: {frame_along}'),
+    x = 'x',
+    y = 'prob. density'
+  ) +
+  transition_reveal(
+    lambda
+  ) +
+  ease_aes('linear')
+
+animate(anim_p)
+```
+
+And the resulting likelihood function looks like this (fig. \@ref(fig:likelihoodExample)):
+
+```{r likelihoodExample, fig.cap="Likelihood function for $x=0.5$."}
+x          <-  0.5
+lambdas    <- seq(0.01, 8, 0.01)
+
+likelihood <- tibble(
+  x          = x,
+  lambda     = lambdas,
+  p   = dexp(x, lambdas)
+)
+area <- sum(diff(lambdas)*zoo::rollmean(likelihood$p,2))
+
+likelihood %>%
+  ggplot() +
+  geom_line(
+    aes(
+      x = lambda,
+      y = p
+    ),
+    lwd = 2
+  ) +
+  geom_area(
+    aes(
+      x = lambda,
+      y = p
+    ),
+    fill = 'orange'
+  ) +
+  annotate(
+    "text",
+    label = paste0("area = ", format(area, digits = 3)),
+    x = 2,
+    y = mean(likelihood$p),
+    size = 4,
+    colour = "black",
+    hjust = 0
+  ) +
+  theme_bw()
+```
+
+**NOTE** that the likelihood function is not a probability distribution! We can confirm this empirically by estimating the area under the curve and verify that it does not equal to 1!
+
+
+# Maximum likelihood estimation (MLE)
+
+For $n$ consecutive observations, and an exponential probability model, the likelihood function is given by (see equivalence relation):
+
+$$
+\begin{aligned}
+& L(\lambda \mid data) = \\
+&= p(\text{data} \mid \theta) \\
+&= p(D_1 = d_1 \mid \lambda) \times p(D_2 = d_2 \mid \lambda) \times \ldots \times p(D_{n} = d_{n} \mid \lambda) \\
+&= \lambda e^{-\lambda d_1} \times \lambda e^{-\lambda d_2} \times \ldots \times\lambda e^{-\lambda d_{n}} \\
+&= \lambda^{n} e^{\big[ -\lambda (d_1 + d_2 + \ldots + d_n) \big]} \\
+&= \lambda^{n} e^{\big[-\lambda \sum_{i=1}^{n} d_i \big]}
+\end{aligned}
+$$
+
+To find the M.L.E, we first take the log of the likelihood function:
+
+$$
+\begin{aligned}
+l &= \text{log}(L) \\
+&= \text{log}(\lambda^{n} e^{\big[-\lambda \sum_{i=1}^{n} d_i \big]})\\
+&= \text{log}(\lambda^n) + \text{log}(e^{\big[-\lambda \sum_{i=1}^{n} d_i \big]})\\
+&= n\text{log}(\lambda) - \lambda \sum_{i=1}^{n} d_i
+\end{aligned}
+$$
+
+then, take its derivative:
+
+$$
+\begin{aligned}
+& \frac{\partial l}{\partial \lambda} = \\
+&= \frac{\partial\big(n\text{log}(\lambda) - \lambda \sum_{i=1}^{n} d_i \big)}{\partial \lambda}\\
+&= \frac{n}{\lambda} - \sum_{i=1}^{n} d_i
+\end{aligned}
+$$
+
+and set it to zero:
+
+$$
+\begin{aligned}
+& \frac{\partial l}{\partial \lambda} = 0 \Leftrightarrow \\
+&\Leftrightarrow \frac{n}{\lambda} - \sum_{i=1}^{n} d_i = 0 \\
+&\Leftrightarrow \hat{\lambda} = \frac{n}{\sum_{i=1}^{n} d_i}
+\end{aligned}
+$$
+
+The mean of the exponential distribution, which represents the expected number of events per unit of time, is $\beta = \frac{1}{\lambda}$ and its M.L.E is therefore $\hat{\beta} = \frac{\sum_{i=1}^{n} d_i}{n}$.
+
+# MLE of a random sample
+
+We read the input file and plot the times of each event (fig. \@ref(fig:data)):
+
+```{r data, fig.height = 3, fig.width = 6, fig.cap = "Event plot for dataset (time is relative, we obviously can't compute the actual timestamps)"}
+data_file = "data/likelihood_blogVisits.csv"
+
+blog <- read_csv(
+  file = data_file,
+  col_names = "d",
+  col_types = cols(
+    d = col_double()
+  )
+) %>%
+  mutate(time = cumsum(d))
+
+N <- nrow(blog)
+
+blog %>%
+  ggplot() +
+  geom_segment(
+    aes(x = time, xend = time,
+        y = -0.1, yend = 0.1
+        ),
+    color = "#5D8AA8",
+    lwd = 0.5
+  ) +
+  geom_segment(
+    aes(x = 0, xend = max(blog$time),
+        y = 0, yend = 0)
+  ) +
+  ylim(-0.2,0.3) +
+  theme_bw() +
+  theme(axis.title.y       = element_blank(),
+        axis.text.y        = element_blank(),
+        axis.ticks.y       = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor   = element_blank(),
+        panel.border       = element_blank())
+```
+
+We also plot the histogram of the consecutive times (fig. \@ref(fig:histogram)):
+
+```{r histogram, fig.cap="Histogram of intra-arrival times $d_i$."}
+blog %>%
+  ggplot() +
+  geom_histogram(
+    aes(x = d),
+    bins = 24
+  ) +
+  theme_bw()
+```
+
+
+We can calculate the M.L.E for $\lambda$ according to the result derived previously. The expected value, or mean, of our process (rate of events per unit of time) is, in the case of the exponential distribution, simply the inverse of $\lambda$, often denoted by $\beta = \frac{1}{\lambda}$. This represents the expected waiting time before we see another first visit to our website.
+
+```{r data_mean}
+ml_estimates <- blog %>%
+  summarise(lambda = N/sum(d),
+            beta   = sum(d)/N)
+
+ml_estimates
+```
+
+# Visualising the likelihood
+
+To compute the likelihood function, we need to multiply $n$ number of $\lambda e^{-\lambda x}$ terms together. As with most likelihood functions, when each of these terms is bellow zero and $n$ increases, the value of the likelihood gets smaller and smaller, and can quickly cause underflow errors. If we instead work in the log domain, products become additions, making the computation more efficient and often less complex. We can use the log function to perform this transformation because it is a monotonically increasing function. Hence the maxima of the log-likelihood function will also be the maxima of the likelihood function.
+
+```{r logLikelihood, fig.cap = "Log likelihood for the complete dataset."}
+lambda         <-  seq(0, 8, 0.01)
+
+log_likelihood <- N * log(lambda) - lambda * sum(blog$d)
+
+flambda = format(ml_estimates$lambda, digits = 3)
+
+tibble(
+  lambda         = lambda,
+  log_likelihood = log_likelihood
+) %>%
+  ggplot() +
+  geom_line(
+    aes(x = lambda,
+        y = log_likelihood
+    ),
+    lwd = 1.5
+  ) +
+  geom_vline(
+    xintercept = ml_estimates$lambda,
+    colour = "red"
+  ) +
+  annotate(
+    "text",
+    label = paste0("lambda['ML']==", flambda),
+    #paste("\u03BB[mle] = ", format(ml_estimates$lambda, digits = 3)),
+    x = ml_estimates$lambda + 0.2,
+    y = -150,
+    size = 5,
+    colour = "red",
+    hjust = 0,
+    parse = TRUE
+  ) +
+  theme_bw()
+```
+
+Because our sample is small, we can also plot the likelihood. But you can clearly see that we are working in the -12th order of magnitude, and if our sample was bigger we could quickly run into underflow issues.
+
+```{r likelihood, fig.cap="Likelihood function for the complete dataset."}
+likelihood <- lambda^N * exp(-lambda * sum(blog$d))
+
+tibble(
+  lambda     = lambda,
+  likelihood = likelihood
+) %>%
+  ggplot() +
+  geom_line(
+    aes(x = lambda,
+        y = likelihood
+    ),
+    lwd = 1.5
+  ) +
+  geom_vline(
+    xintercept = ml_estimates$lambda,
+    colour = "red"
+  ) +
+  annotate(
+    "text",
+    label = paste0("lambda['ML']==", flambda),
+    x = ml_estimates$lambda + 0.4,
+    y = 4e-12,
+    size = 5,
+    colour = "red",
+    hjust = 0,
+    parse = TRUE
+  ) +
+  theme_bw()
+```
+
+And the probability density function for $\lambda_{ML}$:
+
+```{r densityMLE, fig.cap="Pdf for our probability model, with $\\lambda = \\lambda_{ML}$"}
+mle_dens <- tibble(
+  x      = seq(0,8,0.01),
+  lambda = ml_estimates$lambda
+) %>%
+  mutate(p      = dexp(x, lambda)) %>%
+  mutate(lambda = as.factor(format(lambda, ndigits = 3)))
+
+mle_dens %>%
+  ggplot() +
+  geom_line(
+    aes(x      = x,
+        y      = p,
+        colour = lambda
+    ),
+    lwd   = 1.5,
+    alpha = .8
+  ) +
+  ylab("prob. density") +
+  theme_bw()
+```
+
+# Confidence intervals
+
+Frequentist confidence intervals express uncertainty about the intervals themselves and not about the value of the parameter. A 95% confidence interval means that, on average, 95 out of 100 confidence intervals computed this way, will contain the true value of the parameter.
+
+This is very different from saying that there is 95% probability that the interval contains the true value of $\lambda$.
+
+Nevertheless, the width of the confidence interval provides an indication of how certain we can be about our point estimate and, in some ways, how adequate our model is.
+
+
+Computing confidence intervals for the rate parameter of the exponential distribution is not done using the same formula that you might have come across previously (when working with the Normal distribution). I won't go into detail about where these formulas come from (still working on understanding _Fischer information_ myself). You can check [Wikipedia](https://en.wikipedia.org/wiki/Exponential_distribution#Confidence_intervals) (unsurprisingly!), or the [problem solutions](https://benlambertdotcom.files.wordpress.com/2018/08/bayesianbook_problemsanswers_final.pdf) for more details.
+
+$$
+\begin{align}
+\lambda_{lower} &= \lambda_{ML}  \Big( 1 - \frac{1.96}{\sqrt n}  \Big)\\
+\lambda_{upper} &= \lambda_{ML} \Big( 1 + \frac{1.96}{\sqrt n}  \Big)
+\end{align}
+$$
+
+```{r confidence intervals}
+lower_conf_int = ml_estimates$lambda * (1 - 1.96 / sqrt(N))
+upper_conf_int = ml_estimates$lambda * (1 + 1.96 / sqrt(N))
+
+cat(paste0("[",format(lower_conf_int, ndigits = 4), ", ",
+               format(upper_conf_int, ndigits = 4),
+           "]"))
+```
+
+Which is a fairly large interval!^[The official [problem solutions]((https://benlambertdotcom.files.wordpress.com/2018/08/bayesianbook_problemsanswers_final.pdf)) actually suggest a different result, but I believe that the author forgot to take the square root of the number of samples when calculating the confidence interval, resulting in a much tighter interval (than expected). Other online sources, seem to corroborate our result.]
+
+# Inference
+
+Inference is all about asking **what are the odds?**
+
+We can do this using our maximum likelihood (point) estimate. Recall, that we calculate probability mass by integrating probability density over the desired ranges $0 \leq x \leq \{1, 5, 30\}$:
+
+$$
+\begin{align}
+& Pr(X \ge x  \mid \lambda)\\
+&= 1 - Pr(X \le x  \mid \lambda)\\
+&= 1 - \int_0^1 p(X = x \mid \lambda) \ dx\\
+&= 1 - \int_0^1 \lambda e ^{-\lambda x} dx\\
+&= 1 - \big[ - e^{-\lambda x} \big]_0^1\\
+&= 1 + [e^{-\lambda x} - 1]\\
+&= e^{-\lambda x}
+\end{align}
+$$
+
+```{r inference}
+pr_01plus <- exp(-ml_estimates$lambda * 1 )
+pr_05plus <- exp(-ml_estimates$lambda * 5 )
+pr_30plus <- exp(-ml_estimates$lambda * 30)
+```
+
+$$
+Pr(X \ge 1 \, \text{min} \ \mid \lambda = \lambda_{ML}) = e^{-\lambda_{ML}}
+$$
+
+```{r inference greater 1, echo = FALSE}
+pr_1plus
+```
+
+$$
+Pr(X \ge 5 \, \text{min} \ \mid \lambda = \lambda_{ML}) = e^{-5\lambda_{ML}}
+$$
+
+```{r inference greater 5, echo = FALSE}
+pr_5plus
+```
+
+$$
+Pr(X \ge 30 \, \text{min} \ \mid \lambda = \lambda_{ML}) = e^{-30\lambda_{ML}}
+$$
+
+```{r inference greater 30, echo = FALSE}
+pr_30plus
+```
+
+&nbsp;
+
+Recall, that, unlike the likelihood function, we get a valid continuous probability distribution by fixing $\lambda$ and varying $x$.
+
+# Model evaluation
+
+Our model thus far is:
+$$
+D_i \sim \text{Exp}(\lambda)
+$$
+
+This a very common lan of representing models
+
+Looking at our (log-)likelihood function, and 95% confidence intervals, we can see that there is some uncertainty regarding our estimate of $\lambda$. In other words, there is a range of values that $\lambda$ could take besides $\hat{\lambda}$. We can't know for sure if our model is the "true" model (in fact, we can argue that there is no such thing as a true model), but we can evaluate whether a different model is more suitable (performs better, explains the data better, etc) than our first model. By proposing a second model, we can compare the two and evaluate which is more adequate.
+
+```{r overdispersed}
+mean(blog$d)
+var(blog$d)
+
+1/(ml_estimates$lambda)^2
+
+ggplot() +
+  geom_histogram(
+    data = blog,
+    aes(
+      x = d,
+      y = stat(density)
+    ),
+    bins = 24,
+  ) +
+  geom_line(
+    data = mle_dens,
+    aes(
+      x      = x,
+      y      = p,
+      colour = lambda
+    ),
+    lwd   = 1.5,
+    alpha = .8
+  ) +
+  ylab("prob. density") +
+  theme_bw()
+
+```
