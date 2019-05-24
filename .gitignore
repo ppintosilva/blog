@@ -1,2 +1,6 @@
 .DS_Store
+.RHistory
+# build dir
 public/
+# for knitr's cache
+blogdown/
