@@ -32,7 +32,7 @@ enableEmoji = true
     url = "/tags/"
 
 [params]
-    subtitle = "and other stochastic ramblings"
+    subtitle = ".. and other stochastic ramblings"
     description = "Thoughts, ramblings and experiments in Data Science (stats \u2229 computing)"
 
     # options for highlight.js (version, additional languages, and theme)
