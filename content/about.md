@@ -1,6 +1,10 @@
 ---
-date: "2016-05-05T21:48:51-07:00"
-title: About
+date: "2019-05-23"
+title: Howdy!
 ---
 
-This is a "hello world" example website for the [**blogdown**](https://github.com/rstudio/blogdown) package. The theme was forked from [@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme) and modified by [Yihui Xie](https://github.com/yihui/hugo-lithium).
+I'm Pedro.
+
+I'm currently a PhD Student at Newcastle University. My research involves improving current traffic monitoring systems by providing better explanatory models of urban traffic congestion. I've recently developed great interest for statistical modelling, Bayesian statistics in particular. I'm looking to use this space to document some my learning process and while I'm at it throw into the mix some stochastic ramblings.
+
+You can find my contact info, github and social media details on my [hub](https://ppintosilva.com).
