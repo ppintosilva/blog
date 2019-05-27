@@ -25,6 +25,7 @@ output:
 <li><a href="#confidence-intervals">Confidence intervals</a></li>
 <li><a href="#inference">Inference</a></li>
 <li><a href="#model-evaluation">Model evaluation</a></li>
+<li><a href="#going-bayesian">Going Bayesian</a></li>
 </ul>
 </div>
 
@@ -503,8 +504,9 @@ cat(paste0(&quot;[&quot;,format(lower_conf_int, ndigits = 4), &quot;, &quot;,
 </div>
 <div id="inference" class="section level1">
 <h1>Inference</h1>
-<p>Inference is all about asking <strong>what are the odds?</strong></p>
-<p>We can do this using our maximum likelihood (point) estimate. Recall, that we calculate probability mass by integrating probability density over the desired ranges <span class="math inline">\(0 \leq x \leq \{1, 5, 30\}\)</span>:</p>
+<p>Inference is all about asking <strong>what are the odds?</strong> Ultimately, inference is what we care about and that’s what we build models for. To explain, to predict, to measure uncertainty, to understand simple and/or complex behavior, and much more! In this instance, what can the model tell us about the first-visits to our website?</p>
+<p>We’ve seen that the expected value (mean, first moment) of the exponential distribution is given by <span class="math inline">\(\beta = 1/\lambda\)</span>. It’s a measure of centrality, where the probability mass centre lies. The mean is often our “best guess” for predicting new values of <span class="math inline">\(x\)</span>. The variance (second moment) is given by <span class="math inline">\(1/\lambda^2\)</span>. It represents spread, how close to the mean should we expect our samples to be. The larger the variance, larger the uncertainty. In this instance, we have a closed-form expression for the first two moments, but this is often not the case for more complex models. It’s important to understand what these features represent, and why we want to compute them whether we’re working with simple low-dimensional models or complex high-dimensional models.</p>
+<p>We can also answer questions about probability, again, using our maximum likelihood (point) estimate. Recall, that we calculate probability mass by integrating probability density over the desired ranges <span class="math inline">\(0 \leq x \leq \{1, 5, 30\}\)</span>:</p>
 <p><span class="math display">\[
 \begin{align}
 &amp; Pr(X \ge x  \mid \lambda)\\
@@ -536,12 +538,14 @@ Pr(X \ge 30 \, \text{min} \ \mid \lambda = \lambda_{ML}) = e^{-30\lambda_{ML}}
 </div>
 <div id="model-evaluation" class="section level1">
 <h1>Model evaluation</h1>
-<p>Our model thus far is:
+<p>Our model thus far is<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>:
 <span class="math display">\[
 D_i \sim \text{Exp}(\lambda)
 \]</span></p>
-<p>This a very common lan of representing models</p>
-<p>Looking at our (log-)likelihood function, and 95% confidence intervals, we can see that there is some uncertainty regarding our estimate of <span class="math inline">\(\lambda\)</span>. In other words, there is a range of values that <span class="math inline">\(\lambda\)</span> could take besides <span class="math inline">\(\hat{\lambda}\)</span>. We can’t know for sure if our model is the “true” model (in fact, we can argue that there is no such thing as a true model), but we can evaluate whether a different model is more suitable (performs better, explains the data better, etc) than our first model. By proposing a second model, we can compare the two and evaluate which is more adequate.</p>
+<p>We can informally assess our model by inspecting our (log-)likelihood function and the width of the confidence intervals. We’ve noted before that the interval seems fairly large. In other words, there is a fair range of values, besides <span class="math inline">\(\lambda_{ML}\)</span> that could have generated this dataset. We therefore conclude that there is some uncertainty regarding our estimate of <span class="math inline">\(\lambda\)</span>, but how much uncertainty is <strong>too much</strong> and how do we determine if our model is adequate or not?</p>
+<p>We can’t know for sure if our model is the “true” model (in fact, <a href="https://en.wikipedia.org/wiki/All_models_are_wrong">there is no such thing as true models</a>), but if the model is adequate then it should be able to generate data(sets) similar to our sample. That is, it should be able to replicate the <em>data generating process</em>.</p>
+<p>We can get a sense of inadequacy by comparing the first and second moments predicted by our model with the observed ones. We’ve seen that</p>
+<p>We can also confirm this inadequacy visually:</p>
 <pre class="r"><code>mean(blog$d)</code></pre>
 <pre><code>## [1] 0.614925</code></pre>
 <pre class="r"><code>var(blog$d)</code></pre>
@@ -570,10 +574,16 @@ D_i \sim \text{Exp}(\lambda)
   ylab(&quot;prob. density&quot;) +
   theme_bw()</code></pre>
 <p><img src="/post/2019-05-24-adventures-in-likelihood-land-blog-blues_files/figure-html/overdispersed-1.png" width="672" /></p>
+<p>But, we generate samples</p>
+</div>
+<div id="going-bayesian" class="section level1">
+<h1>Going Bayesian</h1>
+<p>, but this problem was tackled from a <em>Frequentist</em> point of view. Through maximum likelihood estimation we were able to find a point estimate for the parameters of our two different models, and loosely evaluate how well they replicated the data generation process. Going Bayesian means added complexity.</p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>The official <a href="(https://benlambertdotcom.files.wordpress.com/2018/08/bayesianbook_problemsanswers_final.pdf)">problem solutions</a> actually suggest a different result, but I believe that the author forgot to take the square root of the number of samples when calculating the confidence interval, resulting in a much tighter interval (than expected). Other online sources, seem to corroborate our result.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn1"><p>The author comes up with a different <a href="(https://benlambertdotcom.files.wordpress.com/2018/08/bayesianbook_problemsanswers_final.pdf)">result</a>. I believe that, in his calculations, the author forgot to take the square root of the number of samples, resulting in a much tighter interval (than expected).<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>if you’re not familiar with this notation see Richard McElrath’s <a href="https://xcelab.net/rm/statistical-rethinking/">Statistical Rethinking</a> book. He publishes all his lectures (slides + videos) online. If you don’t have access to the book, check out <a href="http://www.sumsar.net/blog/2013/10/how-do-you-write-your-model-definitions/">this blog post</a>. I couldn’t find many resources/tutorials online, so I might actually write a post on this sometime.<a href="#fnref2" class="footnote-back">↩</a></p></li>
 </ol>
 </div>

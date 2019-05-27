@@ -530,13 +530,15 @@ cat(paste0("[",format(lower_conf_int, ndigits = 4), ", ",
            "]"))
 ```
 
-Which is a fairly large interval!^[The official [problem solutions]((https://benlambertdotcom.files.wordpress.com/2018/08/bayesianbook_problemsanswers_final.pdf)) actually suggest a different result, but I believe that the author forgot to take the square root of the number of samples when calculating the confidence interval, resulting in a much tighter interval (than expected). Other online sources, seem to corroborate our result.]
+Which is a fairly large interval!^[The author comes up with a different [result]((https://benlambertdotcom.files.wordpress.com/2018/08/bayesianbook_problemsanswers_final.pdf)). I believe that, in his calculations, the author forgot to take the square root of the number of samples, resulting in a much tighter interval (than expected).]
 
 # Inference
 
-Inference is all about asking **what are the odds?**
+Inference is all about asking **what are the odds?** Ultimately, inference is what we care about and that's what we build models for. To explain, to predict, to measure uncertainty, to understand simple and/or complex behavior, and much more! In this instance, what can the model tell us about the first-visits to our website? 
 
-We can do this using our maximum likelihood (point) estimate. Recall, that we calculate probability mass by integrating probability density over the desired ranges $0 \leq x \leq \{1, 5, 30\}$:
+We've seen that the expected value (mean, first moment) of the exponential distribution is given by $\beta = 1/\lambda$. It's a measure of centrality, where the probability mass centre lies. The mean is often our "best guess" for predicting new values of $x$. The variance (second moment) is given by $1/\lambda^2$. It represents spread, how close to the mean should we expect our samples to be. The larger the variance, larger the uncertainty. In this instance, we have a closed-form expression for the first two moments, but this is often not the case for more complex models. It's important to understand what these features represent, and why we want to compute them whether we're  working with simple low-dimensional models or complex high-dimensional models.
+
+We can also answer questions about probability, again, using our maximum likelihood (point) estimate.  Recall, that we calculate probability mass by integrating probability density over the desired ranges $0 \leq x \leq \{1, 5, 30\}$:
 
 $$
 \begin{align}
@@ -586,14 +588,18 @@ Recall, that, unlike the likelihood function, we get a valid continuous probabil
 
 # Model evaluation
 
-Our model thus far is:
+Our model thus far is^[if you're not familiar with this notation see  Richard McElrath's [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/) book. He publishes all his lectures (slides + videos) online. If you don't have access to the book, check out [this blog post](http://www.sumsar.net/blog/2013/10/how-do-you-write-your-model-definitions/). I couldn't find many resources/tutorials online, so I might actually write a post on this sometime.]:
 $$
 D_i \sim \text{Exp}(\lambda)
 $$
 
-This a very common lan of representing models
+We can informally assess our model by inspecting our (log-)likelihood function and the width of the confidence intervals. We've noted before that the interval seems fairly large. In other words, there is a fair range of values, besides $\lambda_{ML}$ that could have generated this dataset. We therefore conclude that there is some uncertainty regarding our estimate of $\lambda$, but how much uncertainty is **too much** and how do we determine if our model is adequate or not?
 
-Looking at our (log-)likelihood function, and 95% confidence intervals, we can see that there is some uncertainty regarding our estimate of $\lambda$. In other words, there is a range of values that $\lambda$ could take besides $\hat{\lambda}$. We can't know for sure if our model is the "true" model (in fact, we can argue that there is no such thing as a true model), but we can evaluate whether a different model is more suitable (performs better, explains the data better, etc) than our first model. By proposing a second model, we can compare the two and evaluate which is more adequate.
+We can't know for sure if our model is the "true" model (in fact, [there is no such thing as true models](https://en.wikipedia.org/wiki/All_models_are_wrong)), but if the model is adequate then it should be able to generate data(sets) similar to our sample. That is, it should be able to replicate the _data generating process_.
+
+We can get a sense of inadequacy by comparing the first and second moments predicted by our model with the observed ones. We've seen that 
+
+We can also confirm this inadequacy visually:
 
 ```{r overdispersed}
 mean(blog$d)
@@ -624,3 +630,9 @@ ggplot() +
   theme_bw()
 
 ```
+
+But,  we generate samples 
+
+# Going Bayesian
+
+, but this problem was tackled from a _Frequentist_ point of view. Through maximum likelihood estimation we were able to find a point estimate for the parameters of our two different models, and loosely evaluate how well they replicated the data generation process. Going Bayesian means added complexity.
