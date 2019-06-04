@@ -5,6 +5,7 @@ date: '2019-05-24'
 slug: adventures-in-likelihood-land-blog-blues
 categories: []
 tags: ['stats-101', 'book-lambert', 'lambert-chapter-4']
+draft: true
 output:
   blogdown::html_page:
     toc: true
