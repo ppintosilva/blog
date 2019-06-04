@@ -1,0 +1,147 @@
+---
+title: Bayesian priors and dodgy coins
+author: Pedro Pinto da Silva
+date: '2019-06-04'
+slug: bayesian-priors-and-dodgy-coins
+categories: []
+tags: ['stats-101', 'book-lambert', 'lambert-chapter-5']
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache =TRUE)
+library(tidyverse)
+
+theme_color = "#5D8AA8"
+```
+
+# The Problem
+
+In this post, we look at problem 5.1 _Dodgy Coins_, from Ben Lambert's book _A Student's Guide to Bayesian Statistics_.
+
+3 coins, 1 bag:
+
+- Coin 1 is biased towards heads ($\theta_1 = 0.75$)
+- Coin 2 is fair ($\theta_2 = 0.50$)
+- Coin 3 is biased towards tails ($\theta_3 = 0.25$)
+
+# Wanna see a magic trick?
+
+Imagine that we take a coin from the bag and then flip it.
+
+Let:
+
+  - $C = \{1,2,3\}$ denote the identity of the coin (i.e. the outcome of the first _experiment_)
+  - $X = \{T, H\} = \{0,1\}$ denote the outcome of the coin toss
+  - $\theta_c$ denote the probability of heads of coin $C = c$.
+
+Note that $X$ and $C$ are random variables and $\theta_c$ is our parameter set $\forall c \in C$.
+
+We can use the binomial distribution to model the outcome of $n$ (independent) coin tosses. If there was only a coin in the bag, this leads to the standard binomial likelihood function that you might be familiar with (don't worry if you're not!):
+
+$$
+L(\theta \mid x) = Pr(X = x \mid \theta) = \binom{n}{x} \theta^{x}(1-\theta)^{n-x}
+$$
+
+where $\theta$ is the probability of heads of the single hypothetical coin. That means that the likelihood, using the equivalence relation, is function of $\theta$ given the data. And the data is composed of just two values: $n$, the number of tosses, and $x$, the number of observed heads.
+From now on we simply use the notation $Pr(X = x)$ to denote the probability mass of $X$ given $\theta$.  Making this explicit is useful at first, especially for begginers, but then it just adds clutter to our notation, so we do without it.
+
+If we consider a **single** coin toss with $x = 1$ (heads), the above likelihood simplifies to:
+
+$$
+L(\theta \mid x) = Pr(X = 1) = \theta
+$$
+
+However, in this instance, we need to take into account the identity of the coin, which we don't know with certainty. That means, that we need to include the outcome of the first _experiment_ ($C = c$) in our model.
+
+For $n$ coin tosses of the **same coin** $c$, the likelihood function is:
+
+$$
+L(\theta_c \mid x) = Pr(X = x \mid C = c) = \binom{n}{x} \theta_{c}^{x}(1-\theta_{c})^{n-x}
+$$
+
+For a single coin toss $x = 1$ (heads), this simplifies to:
+
+$$
+L(\theta_c \mid x) = Pr(X = 1 \mid C = c) = \theta_c
+$$
+
+The sum of the likelihood of all parameter values, in this instance, is hence given by:
+
+$$
+\sum_{c = 1}^{3} Pr(X=1 \mid C = c) = \theta_1 + \theta_2 + \theta_3 = 1.5
+$$
+
+And here's a plot of the likelihood:
+
+```{r likelihood}
+tibble(
+  c = 1:3,
+  theta = c(0.25, 0.50, 0.75)
+) %>%
+  ggplot() +
+  geom_col(
+    aes(c, theta),
+    fill = theme_color
+  ) +
+  scale_x_continuous(breaks = 1:3,
+                     minor_breaks = NULL) +
+  scale_y_continuous(breaks = seq(0, 1, 0.25),
+                     minor_breaks = NULL) +
+  theme_bw()
+  
+```
+
+Note that, the likelihood function is discrete because we know the probabilities of heads (values of $\theta_c$). In the classic coin tossing problem, we are given the outcome of $n$ coin tosses and want to infer $\theta$ for a single coin. The resulting likelihood function in that case is continuous, as we vary $\theta$. In this instance, we want to infer the hidden identity of the coin $C$, and $\theta$ can only take one of 3 values. These two problems end up being quite different!
+
+We can visually see that the maximum likelihood estimate for the coin's identity in this case is $\theta_{ML} = \theta_c = 0.75$.
+
+# The posterior and a first prior
+
+The goal of Bayesian inference is to compute the posterior, i.e. the probability of our parameters (and model), given the data. In this case that means computing:
+
+$$
+Pr(C = c \mid X = x)
+$$
+
+We can do this via **Bayes rule**:
+
+$$
+Pr(C = c \mid X = x) = \frac{Pr(X = x \mid C = c) \times Pr(C = c)}{Pr(X = x)}
+$$
+
+where:
+
+  - $Pr(X = x \mid C = c)$ is the probability of the data given the parameters, a.k.a the **likelihood**
+  - $Pr(C = c)$ is the probability of the parameters before seing the data (prior belief), a.k.a the **prior**
+  - $Pr(X = x)$ is the probability of the data, a.k.a the marginal probability of the data.
+  
+By the law of total probability the denominator can be rewritten as:
+
+$$
+Pr(X = x) = \sum_{c} Pr(X = x \mid C = c) \times Pr(C = c)
+$$
+
+Because the likelihood is not a valid probability distribution, it is the job of the denominator to make sure that the posterior is a valid probability distribution. That is why the denominator is often interpreted as a normalising constant (it can also be interpreted as a probability distribution). We can therefore write that the posterior is proportional to the likelihood times the prior:
+
+$$
+Pr(C = c \mid X = x) \propto \Pr(X = x \mid C = c) \times Pr(C = c)
+$$
+
+Please refer to the Ben Lambert's book for more details.
+
+Now, how does this work in practice? We continue with our example of a single coin toss $x = 1$ and introduce Baye's Box:
+
+EMPTY BOX
+BOX WITH FIRST COLUMN FILLED
+
+
+If we assume that the 3 coins are equally likely to be picked (a discrete uniform prior), we can construct a prior for :
+
+$$
+Pr(X = x \mid C) = Pr()
+$$
+BOX WITH SECOND COLUMN FILLED
