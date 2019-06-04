@@ -1,5 +1,5 @@
 .DS_Store
-.RHistory
+.Rhistory
 # build dir
 public/
 # for knitr's cache
