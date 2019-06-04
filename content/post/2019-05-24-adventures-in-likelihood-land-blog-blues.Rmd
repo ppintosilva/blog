@@ -4,7 +4,7 @@ author: "Pedro Pinto da Silva"
 date: '2019-05-24'
 slug: adventures-in-likelihood-land-blog-blues
 categories: []
-tags: ['stats-101', 'book-lambert']
+tags: ['stats-101', 'book-lambert', 'lambert-chapter-4']
 output:
   blogdown::html_page:
     toc: true
@@ -14,6 +14,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE, cache =TRUE)
 library(tidyverse)
 library(gganimate)
+
+require(zoo)
+require(codetools)
+require(gifski)
 ```
 
 ---
@@ -563,7 +567,7 @@ Pr(X \ge 1 \, \text{min} \ \mid \lambda = \lambda_{ML}) = e^{-\lambda_{ML}}
 $$
 
 ```{r inference greater 1, echo = FALSE}
-pr_1plus
+pr_01plus
 ```
 
 $$
@@ -571,7 +575,7 @@ Pr(X \ge 5 \, \text{min} \ \mid \lambda = \lambda_{ML}) = e^{-5\lambda_{ML}}
 $$
 
 ```{r inference greater 5, echo = FALSE}
-pr_5plus
+pr_05plus
 ```
 
 $$

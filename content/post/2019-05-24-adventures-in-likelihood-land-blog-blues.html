@@ -4,7 +4,7 @@ author: "Pedro Pinto da Silva"
 date: '2019-05-24'
 slug: adventures-in-likelihood-land-blog-blues
 categories: []
-tags: ['stats-101', 'book-lambert']
+tags: ['stats-101', 'book-lambert', 'lambert-chapter-4']
 output:
   blogdown::html_page:
     toc: true
@@ -100,7 +100,7 @@ Pr(X \leq x \mid \lambda) = \int_{0}^{x} p(X = x \mid \lambda) \ dx
 <p><span class="math display">\[
 \int_{-\infty}^{\infty} p(X = x \mid \lambda) \, dx = \int_{0}^{\infty} \lambda e^{-\lambda x} \, dx = - \big[ e^{-\lambda x} \big]^{\infty}_{0} = - \big[ 0 - 1] = 1
 \]</span></p>
-<p>We can plot the <strong>pdf</strong> for different values of <span class="math inline">\(\lambda\)</span> (fig. <a href="#fig:expPdf">2</a>):</p>
+<p>We can plot the <strong>pdf</strong> for different values of <span class="math inline">\(\lambda\)</span> (fig. <a href="#fig:expPdf">2</a>):</p>
 <pre class="r"><code>lambdas  &lt;- c(0.5, 2, 5)
 x        &lt;- seq(0, 8, 0.01)
 
@@ -224,7 +224,7 @@ animate(anim_p)</code></pre>
 Figure 3: Computing the likelihood function for a single observation <span class="math inline">\(x=0.5\)</span>.
 </p>
 </div>
-<p>And the resulting likelihood function looks like this (fig. <a href="#fig:likelihoodExample">4</a>):</p>
+<p>And the resulting likelihood function looks like this (fig. <a href="#fig:likelihoodExample">4</a>):</p>
 <pre class="r"><code>x          &lt;-  0.5
 lambdas    &lt;- seq(0.01, 8, 0.01)
 
@@ -311,7 +311,7 @@ l &amp;= \text{log}(L) \\
 </div>
 <div id="mle-of-a-random-sample" class="section level1">
 <h1>MLE of a random sample</h1>
-<p>We read the input file and plot the times of each event (fig. <a href="#fig:data">5</a>):</p>
+<p>We read the input file and plot the times of each event (fig. <a href="#fig:data">5</a>):</p>
 <pre class="r"><code>data_file = &quot;data/likelihood_blogVisits.csv&quot;
 
 blog &lt;- read_csv(
@@ -352,7 +352,7 @@ blog %&gt;%
 Figure 5: Event plot for dataset (time is relative, we obviously can’t compute the actual timestamps)
 </p>
 </div>
-<p>We also plot the histogram of the consecutive times (fig. <a href="#fig:histogram">6</a>):</p>
+<p>We also plot the histogram of the consecutive times (fig. <a href="#fig:histogram">6</a>):</p>
 <pre class="r"><code>blog %&gt;%
   ggplot() +
   geom_histogram(
