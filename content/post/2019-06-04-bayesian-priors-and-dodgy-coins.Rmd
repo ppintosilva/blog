@@ -1,11 +1,11 @@
 ---
 title: Bayesian priors and dodgy coins
 author: Pedro Pinto da Silva
-date: '2019-06-04'
+date: '2019-06-05'
 slug: bayesian-priors-and-dodgy-coins
 categories: []
 tags: ['stats-101', 'book-lambert', 'lambert-chapter-5']
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true
@@ -14,6 +14,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache =TRUE)
 library(tidyverse)
+library(gganimate)
 library(kableExtra)
 library(formattable)
 
@@ -62,7 +63,10 @@ However, in this instance, we need to take into account the identity of the coin
 For $n$ coin tosses of the **same coin** $c$, the likelihood function is:
 
 $$
-L(\theta_c \mid x) = Pr(X = x \mid C = c) = \binom{n}{x} \theta_{c}^{x}(1-\theta_{c})^{n-x}
+\begin{equation}
+  L(\theta_c \mid x) = Pr(X = x \mid C = c) = \binom{n}{x} \theta_{c}^{x}(1-\theta_{c})^{n-x}
+  (\#eq:binom)
+\end{equation}
 $$
 
 For a single coin toss $x = 1$ (heads), this simplifies to:
@@ -166,31 +170,29 @@ Looking at the table we can confirm that:
 
 ## Multiple coin tosses
 
-For $n$ tosses of the same coin, our random variable $X$ now represents the number of times we record heads as the outcome of each toss: $X \in \{0,1,\ldots,n\}$.
+For $n$ tosses of the same coin, our random variable $X$ now represents the number of times we record heads: $X \in \{0,1,\ldots,n\}$. And for a given sample of $x$ heads, we can calculate the likelihood using the formula for the binomial probability mass function, introduced above \@ref(eq:binom).
 
-We recover the likelihood function from above
-
-For two coin tosses and $X = 2$, we have: # REF #
+Therefore, for two coin tosses and $X = 2$, we have:
 
 ```{r two coin tosses}
-x     = 2 # number of heads
-c     = 1:3
-theta = c(0.25, 0.50, 0.75)
+x     <- 2 # number of heads
+c     <- 1:3
+theta <-  c(0.25, 0.50, 0.75)
 
-lik   = dbinom(x = 2, size = 2, p = theta) # likelihood
-prior = rep(1/3, 3)
-num   = lik * prior # numerator
-denom = sum(num) # denominator
-post  = num/denom # posterior
+lik   <- dbinom(x = 2, size = 2, p = theta) # likelihood
+prior <- rep(1/3, 3)
+num   <- lik * prior # numerator
+denom <- sum(num) # denominator
+post  <- num/denom # posterior
 ```
 
 ```{r bayes box 2, echo = FALSE}
 tibble(
   Parameter = c("C", "1" , "2", "3", "Total"),
-  Likelihood = c("$Pr(X = 1 \\mid C =c)$", format(lik, digits = 3), as.character(sum(lik))),
+  Likelihood = c("$Pr(X = 2 \\mid C =c)$", format(lik, digits = 3), as.character(sum(lik))),
   Prior = c("$Pr(C = c)$", format(prior, digits = 3), as.character(sum(prior))),
-  `Likelihood $\\times$ Prior` = c("$Pr(X = 1 \\mid C = c) \\times Pr(C=c)$", format(num, digits = 3), format(denom, digits = 3)),
-  Posterior = c("$Pr(C = c \\mid X = 1)$", format(post, digits = 3), as.character(sum(post)))
+  `Likelihood $\\times$ Prior` = c("$Pr(X = 2 \\mid C = c) \\times Pr(C=c)$", format(num, digits = 3), format(denom, digits = 3)),
+  Posterior = c("$Pr(C = c \\mid X = 2)$", format(post, digits = 3), as.character(sum(post)))
 ) %>%
   knitr::kable(escape = FALSE) %>%
   kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
@@ -201,10 +203,173 @@ tibble(
   row_spec(1, font_size = 13)
 
 ```
+---
 
-And we wrap up this section with a nice animation with the awesome `ggplot + gganimate` combo:
+And here's a visualisation just because the `ggplot + gganimate` combo is awesome:
 
+```{r binom anim, echo = FALSE}
 
+n <- 10
+
+simul <- 
+  lapply(0:n, function(x)
+    tibble(
+      heads = x,
+      c     = c,
+      theta = theta,
+      likelihood = dbinom(x = x, size = n, p = theta),
+      prior = rep(1/length(c), length(c)),
+    )
+  ) %>%
+  bind_rows() %>%
+  group_by(heads) %>%
+  mutate(
+    numerator = likelihood * prior,
+    denominator = sum(numerator),
+    posterior = numerator/denominator
+  ) %>%
+  gather(key = "key", value = "value",
+         likelihood, prior, numerator, denominator, posterior) %>%
+  mutate(key = factor(key,
+                     levels = c("likelihood", "prior", "posterior",
+                                "numerator", "denominator")))
+
+anim_p <- 
+  simul %>%
+  ggplot() +
+  geom_col(
+    aes(x = c, y = value),
+    fill = theme_color
+  ) +
+  scale_x_continuous(breaks = 1:3,
+                     minor_breaks = NULL) +
+  # scale_y_continuous(breaks = seq(0, 1, 0.25),
+  #                    minor_breaks = NULL) +
+  theme_bw() +
+  facet_wrap(~key) +
+  # gganimate
+  labs(title = "Number of heads X = {frame_time} in n = 10 tosses") +
+  transition_time(heads) +
+  ease_aes('linear')
+  
+animate(anim_p)
+```
 
 # An informative prior
 
+In the previous section we introduced an uninformative prior for $C$. It is intuitive why a uniform prior is uninformative in this case as, in some sense, it lets the data speak for itself, and the resulting shape of the posterior is fully determined by the likelihood. However, a flat prior is not always uninformati
+
+```{r two coin tosses informative prior}
+x     <- 2 # number of heads
+c     <- 1:3
+theta <- c(0.25, 0.50, 0.75)
+
+lik   <- dbinom(x = 2, size = 2, p = theta) # likelihood
+prior <- c(1/20, 5/20, 14/20)
+num   <- lik * prior # numerator
+denom <- sum(num) # denominator
+post  <- num/denom # posterior
+```
+
+```{r bayes box 3, echo = FALSE}
+tibble(
+  Parameter = c("C", "1" , "2", "3", "Total"),
+  Likelihood = c("$Pr(X = 2 \\mid C =c)$", format(lik, digits = 3), as.character(sum(lik))),
+  Prior = c("$Pr(C = c)$", format(prior, digits = 3), as.character(sum(prior))),
+  `Likelihood $\\times$ Prior` = c("$Pr(X = 2 \\mid C = c) \\times Pr(C=c)$", format(num, digits = 3), format(denom, digits = 3)),
+  Posterior = c("$Pr(C = c \\mid X = 2)$", format(post, digits = 3), as.character(sum(post)))
+) %>%
+  knitr::kable(escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
+  row_spec(0, bold = T, background = theme_color, color = "white", font_size = 15, align = "c") %>%
+  row_spec(c(1,3), bold = F, background = "#fafafa", font_size = 14) %>%
+  row_spec(c(2,4), bold = F, background = "transparent", font_size = 14) %>%
+  row_spec(5, bold = T, background = "#f1f1f1", font_size = 15) %>%
+  row_spec(1, font_size = 13)
+
+```
+---
+
+```{r binom anim 2, echo = FALSE}
+
+n <- 10
+
+simul <- 
+  lapply(0:n, function(x)
+    tibble(
+      heads = x,
+      c     = c,
+      theta = theta,
+      prior = prior,
+      likelihood = dbinom(x = x, size = n, p = theta),
+    )
+  ) %>%
+  bind_rows() %>%
+  group_by(heads) %>%
+  mutate(
+    numerator = likelihood * prior,
+    posterior = numerator/sum(numerator)
+  ) %>%
+  select(-numerator) %>%
+  gather(key = "key", value = "value",
+         likelihood, prior, posterior) %>%
+  mutate(key = factor(key,
+                     levels = c("likelihood", "prior", "posterior")))
+
+anim_p <- 
+  simul %>%
+  ggplot() +
+  geom_col(
+    aes(x = c, y = value),
+    fill = theme_color
+  ) +
+  scale_x_continuous(breaks = 1:3,
+                     minor_breaks = NULL) +
+  # scale_y_continuous(breaks = seq(0, 1, 0.25),
+  #                    minor_breaks = NULL) +
+  theme_bw() +
+  facet_wrap(~key) +
+  # gganimate
+  labs(title = "Number of heads X = {frame_time} in n = 10 tosses") +
+  transition_time(heads) +
+  ease_aes('linear')
+  
+animate(anim_p)
+```
+
+We can now calculate summary statistics of our posterior distribution:
+
+```{r summary posterior}
+# Posterior Mean
+mean(post)
+
+# Maximum a posterior (MAP) estimate = Maximum Likelihood estimate
+max(post)
+```
+
+The posterior mean in this instance is not a very useful summary statistic or point estimate, as its value lies between the probability mass assigned to parameters values $c=2$ and $c=3$.  This is because of the discrete nature of $C$. If we had to make a decision about which of the coin is more likely to have been picked, this would be very difficult to do using the mean. The **MAP** (Maximum A Posteriori) or maximum likelihood estimate, on the other hand, would give us a straight answer ($c=3$).
+
+# The Posterior Predictive Distribution
+
+One way to evaluate the model is to check how well it can reproduce the data generating process. We can do this via the posterior predictive distribution. Considering the single coin toss example again: $n =1, x = 1$, with the uniform prior on C, the posterior predictive distribution can be obtained using the expression:
+
+$$
+Pr(\tilde{X} \mid X = 1) =  \sum_{c=1}^{3} Pr(\tilde{X} \mid C) \times Pr(C \mid X = 1)
+$$
+
+Where does this expression come from?
+
+```{r posterior pred}
+x     <- 1 # number of heads
+c     <- 1:3
+theta <- c(0.25, 0.50, 0.75)
+post  <- c(1/6, 2/6, 3/6)
+
+xtilde <- c(0,1)
+lik_xtilde <- matrix(c(1-theta, theta), nrow = 2, byrow = TRUE)
+post.pred <- lik_xtilde %*% matrix(post, nrow = 3)
+rownames(post.pred) <- c("Pr(new_X | X = 0) = ", "Pr(new_X | X = 1) = ")
+colnames(post.pred) <- ""
+
+post.pred
+```
