@@ -11,18 +11,23 @@ output:
     toc: true
 ---
 
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
 
 <div id="TOC">
 <ul>
 <li><a href="#the-problem">The Problem</a></li>
 <li><a href="#wanna-see-a-magic-trick">Wanna see a magic trick?</a></li>
-<li><a href="#the-posterior-and-a-first-prior">The posterior and a first prior</a></li>
+<li><a href="#the-posterior-with-a-uniform-prior">The posterior with a uniform prior</a><ul>
+<li><a href="#a-single-coin-toss">A single coin toss</a></li>
+<li><a href="#multiple-coin-tosses">Multiple coin tosses</a></li>
+</ul></li>
+<li><a href="#an-informative-prior">An informative prior</a></li>
 </ul>
 </div>
 
 <div id="the-problem" class="section level1">
 <h1>The Problem</h1>
-<p>In this post, we look at problem 5.1 <em>Dodgy Coins</em>, from Ben Lambert’s book <em>A Student’s Guide to Bayesian Statistics</em>.</p>
+<p>Today we look at problem 5.1 <em>Dodgy Coins</em>, from Ben Lambert’s book <em>A Student’s Guide to Bayesian Statistics</em>.</p>
 <p>3 coins, 1 bag:</p>
 <ul>
 <li>Coin 1 is biased towards heads (<span class="math inline">\(\theta_1 = 0.75\)</span>)</li>
@@ -82,9 +87,9 @@ L(\theta_c \mid x) = Pr(X = 1 \mid C = c) = \theta_c
 <p>Note that, the likelihood function is discrete because we know the probabilities of heads (values of <span class="math inline">\(\theta_c\)</span>). In the classic coin tossing problem, we are given the outcome of <span class="math inline">\(n\)</span> coin tosses and want to infer <span class="math inline">\(\theta\)</span> for a single coin. The resulting likelihood function in that case is continuous, as we vary <span class="math inline">\(\theta\)</span>. In this instance, we want to infer the hidden identity of the coin <span class="math inline">\(C\)</span>, and <span class="math inline">\(\theta\)</span> can only take one of 3 values. These two problems end up being quite different!</p>
 <p>We can visually see that the maximum likelihood estimate for the coin’s identity in this case is <span class="math inline">\(\theta_{ML} = \theta_c = 0.75\)</span>.</p>
 </div>
-<div id="the-posterior-and-a-first-prior" class="section level1">
-<h1>The posterior and a first prior</h1>
-<p>The goal of Bayesian inference is to compute the posterior, i.e. the probability of our parameters (and model), given the data. In this case that means computing:</p>
+<div id="the-posterior-with-a-uniform-prior" class="section level1">
+<h1>The posterior with a uniform prior</h1>
+<p>The goal of Bayesian inference is to compute the posterior, i.e. the probability of our parameters (and model) given the data. In this case that means computing:</p>
 <p><span class="math display">\[
 Pr(C = c \mid X = x)
 \]</span></p>
@@ -95,24 +100,267 @@ Pr(C = c \mid X = x) = \frac{Pr(X = x \mid C = c) \times Pr(C = c)}{Pr(X = x)}
 <p>where:</p>
 <ul>
 <li><span class="math inline">\(Pr(X = x \mid C = c)\)</span> is the probability of the data given the parameters, a.k.a the <strong>likelihood</strong></li>
-<li><span class="math inline">\(Pr(C = c)\)</span> is the probability of the parameters before seing the data (prior belief), a.k.a the <strong>prior</strong></li>
+<li><span class="math inline">\(Pr(C = c)\)</span> is the probability of the parameters before seeing the data (prior belief), a.k.a the <strong>prior</strong></li>
 <li><span class="math inline">\(Pr(X = x)\)</span> is the probability of the data, a.k.a the marginal probability of the data.</li>
 </ul>
-<p>By the law of total probability the denominator can be rewritten as:</p>
+<p>By the law of total probability, the denominator can be re-written as:</p>
 <p><span class="math display">\[
 Pr(X = x) = \sum_{c} Pr(X = x \mid C = c) \times Pr(C = c)
 \]</span></p>
-<p>Because the likelihood is not a valid probability distribution, it is the job of the denominator to make sure that the posterior is a valid probability distribution. That is why the denominator is often interpreted as a normalising constant (it can also be interpreted as a probability distribution). We can therefore write that the posterior is proportional to the likelihood times the prior:</p>
+<p>Because the likelihood is not a valid probability distribution, it’s the job of the denominator to make sure that the posterior is a valid probability distribution. That is why the denominator is often interpreted as a normalising constant (it can also be interpreted as a probability distribution). We can therefore write that the posterior is proportional to the likelihood times the prior<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>:</p>
 <p><span class="math display">\[
 Pr(C = c \mid X = x) \propto \Pr(X = x \mid C = c) \times Pr(C = c)
 \]</span></p>
-<p>Please refer to the Ben Lambert’s book for more details.</p>
-<p>Now, how does this work in practice? We continue with our example of a single coin toss <span class="math inline">\(x = 1\)</span> and introduce Baye’s Box:</p>
-<p>EMPTY BOX
-BOX WITH FIRST COLUMN FILLED</p>
-<p>If we assume that the 3 coins are equally likely to be picked (a discrete uniform prior), we can construct a prior for :</p>
-<p><span class="math display">\[
-Pr(X = x \mid C) = Pr()
-\]</span>
-BOX WITH SECOND COLUMN FILLED</p>
+<div id="a-single-coin-toss" class="section level2">
+<h2>A single coin toss</h2>
+<p>Continuing with the example of a single coin toss <span class="math inline">\(x = 1\)</span>, we now assume that the 3 coins are equally likely to be picked. This is equivalent to picking the discrete uniform distribution for our prior. Now that we understand how to calculate the likelihood and prior, we introduce <a href="https://youtu.be/mLxDzAsIg7I">Baye’s Box</a> which help us to compute the denominator (normalising constant), and hence the posterior, by hand:</p>
+<table class="table table-hover" style="float: left; margin-right: 10px;">
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Parameter
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Likelihood
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Prior
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Likelihood <span class="math inline">\(\times\)</span> Prior
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Posterior
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+C
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+<span class="math inline">\(Pr(X = 1 \mid C =c)\)</span>
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+<span class="math inline">\(Pr(C = c)\)</span>
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+<span class="math inline">\(Pr(X = 1 \mid C = c) \times Pr(C=c)\)</span>
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+<span class="math inline">\(Pr(C = c \mid X = 1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+1
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+<span class="math inline">\(\theta_1\)</span> = 1/4
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+1/3
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+1/12
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+(1/12)/(6/12) = 1/6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+2
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+<span class="math inline">\(\theta_2\)</span> = 2/4
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+1/3
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+2/12
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+(2/12)/(6/12) = 2/6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+3
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+<span class="math inline">\(\theta_2\)</span> = 3/4
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+1/3
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+3/12
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+(3/12)/(6/12) = 3/6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+Total
+</td>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+6/4
+</td>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+1
+</td>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+6/12
+</td>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+1
+</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p>Looking at the table we can confirm that:</p>
+<ul>
+<li>The <strong>Likelihood</strong> is not a valid probability distribution (I know I’m repeating this <em>ad nauseum</em> but repetition is at the core of learning)</li>
+<li>The <strong>Posterior</strong> is a valid (discrete) probability distribution, i.e. <span class="math inline">\(\sum_{c=1}^{3} Pr(C =c \mid X = 1) = 1\)</span></li>
+<li>The denominator is a constant, with value <span class="math inline">\(1/6\)</span>.</li>
+</ul>
+</div>
+<div id="multiple-coin-tosses" class="section level2">
+<h2>Multiple coin tosses</h2>
+<p>For <span class="math inline">\(n\)</span> tosses of the same coin, our random variable <span class="math inline">\(X\)</span> now represents the number of times we record heads as the outcome of each toss: <span class="math inline">\(X \in \{0,1,\ldots,n\}\)</span>.</p>
+<p>We recover the likelihood function from above</p>
+<p>For two coin tosses and <span class="math inline">\(X = 2\)</span>, we have: # REF #</p>
+<pre class="r"><code>x     = 2 # number of heads
+c     = 1:3
+theta = c(0.25, 0.50, 0.75)
+
+lik   = dbinom(x = 2, size = 2, p = theta) # likelihood
+prior = rep(1/3, 3)
+num   = lik * prior # numerator
+denom = sum(num) # denominator
+post  = num/denom # posterior</code></pre>
+<table class="table table-hover" style="float: left; margin-right: 10px;">
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Parameter
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Likelihood
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Prior
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Likelihood <span class="math inline">\(\times\)</span> Prior
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+Posterior
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+C
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+<span class="math inline">\(Pr(X = 1 \mid C =c)\)</span>
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+<span class="math inline">\(Pr(C = c)\)</span>
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+<span class="math inline">\(Pr(X = 1 \mid C = c) \times Pr(C=c)\)</span>
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-size: 13px;">
+<span class="math inline">\(Pr(C = c \mid X = 1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+1
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+0.0625
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+0.333
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+0.0208
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+0.0714
+</td>
+</tr>
+<tr>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+2
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+0.2500
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+0.333
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+0.0833
+</td>
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;">
+0.2857
+</td>
+</tr>
+<tr>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+3
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+0.5625
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+0.333
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+0.1875
+</td>
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;">
+0.6429
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+Total
+</td>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+0.875
+</td>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+1
+</td>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+0.292
+</td>
+<td style="text-align:left;font-weight: bold;background-color: #f1f1f1 !important;font-size: 15px;">
+1
+</td>
+</tr>
+</tbody>
+</table>
+<p>And we wrap up this section with a nice animation with the awesome <code>ggplot + gganimate</code> combo:</p>
+</div>
+</div>
+<div id="an-informative-prior" class="section level1">
+<h1>An informative prior</h1>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Please refer to <a href="https://ben-lambert.com/a-students-guide-to-bayesian-statistics/">Ben Lambert’s book</a> for more details.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
 </div>

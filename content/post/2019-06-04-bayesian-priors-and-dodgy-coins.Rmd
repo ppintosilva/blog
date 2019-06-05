@@ -14,13 +14,15 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache =TRUE)
 library(tidyverse)
+library(kableExtra)
+library(formattable)
 
 theme_color = "#5D8AA8"
 ```
 
 # The Problem
 
-In this post, we look at problem 5.1 _Dodgy Coins_, from Ben Lambert's book _A Student's Guide to Bayesian Statistics_.
+Today we look at problem 5.1 _Dodgy Coins_, from Ben Lambert's book _A Student's Guide to Bayesian Statistics_.
 
 3 coins, 1 bag:
 
@@ -34,9 +36,9 @@ Imagine that we take a coin from the bag and then flip it.
 
 Let:
 
-  - $C = \{1,2,3\}$ denote the identity of the coin (i.e. the outcome of the first _experiment_)
-  - $X = \{T, H\} = \{0,1\}$ denote the outcome of the coin toss
-  - $\theta_c$ denote the probability of heads of coin $C = c$.
+- $C = \{1,2,3\}$ denote the identity of the coin (i.e. the outcome of the first _experiment_)
+- $X = \{T, H\} = \{0,1\}$ denote the outcome of the coin toss
+- $\theta_c$ denote the probability of heads of coin $C = c$.
 
 Note that $X$ and $C$ are random variables and $\theta_c$ is our parameter set $\forall c \in C$.
 
@@ -99,9 +101,9 @@ Note that, the likelihood function is discrete because we know the probabilities
 
 We can visually see that the maximum likelihood estimate for the coin's identity in this case is $\theta_{ML} = \theta_c = 0.75$.
 
-# The posterior and a first prior
+# The posterior with a uniform prior
 
-The goal of Bayesian inference is to compute the posterior, i.e. the probability of our parameters (and model), given the data. In this case that means computing:
+The goal of Bayesian inference is to compute the posterior, i.e. the probability of our parameters (and model) given the data. In this case that means computing:
 
 $$
 Pr(C = c \mid X = x)
@@ -115,33 +117,94 @@ $$
 
 where:
 
-  - $Pr(X = x \mid C = c)$ is the probability of the data given the parameters, a.k.a the **likelihood**
-  - $Pr(C = c)$ is the probability of the parameters before seing the data (prior belief), a.k.a the **prior**
-  - $Pr(X = x)$ is the probability of the data, a.k.a the marginal probability of the data.
+- $Pr(X = x \mid C = c)$ is the probability of the data given the parameters, a.k.a the **likelihood**
+- $Pr(C = c)$ is the probability of the parameters before seeing the data (prior belief), a.k.a the **prior**
+- $Pr(X = x)$ is the probability of the data, a.k.a the marginal probability of the data.
   
-By the law of total probability the denominator can be rewritten as:
+By the law of total probability, the denominator can be re-written as:
 
 $$
 Pr(X = x) = \sum_{c} Pr(X = x \mid C = c) \times Pr(C = c)
 $$
 
-Because the likelihood is not a valid probability distribution, it is the job of the denominator to make sure that the posterior is a valid probability distribution. That is why the denominator is often interpreted as a normalising constant (it can also be interpreted as a probability distribution). We can therefore write that the posterior is proportional to the likelihood times the prior:
+Because the likelihood is not a valid probability distribution, it's the job of the denominator to make sure that the posterior is a valid probability distribution. That is why the denominator is often interpreted as a normalising constant (it can also be interpreted as a probability distribution). We can therefore write that the posterior is proportional to the likelihood times the prior^[Please refer to [Ben Lambert's book](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/) for more details.]:
 
 $$
 Pr(C = c \mid X = x) \propto \Pr(X = x \mid C = c) \times Pr(C = c)
 $$
 
-Please refer to the Ben Lambert's book for more details.
+## A single coin toss
 
-Now, how does this work in practice? We continue with our example of a single coin toss $x = 1$ and introduce Baye's Box:
+Continuing with the example of a single coin toss $x = 1$, we now assume that the 3 coins are equally likely to be picked. This is equivalent to picking the discrete uniform distribution for our prior. Now that we understand how to calculate the likelihood and prior, we introduce [Baye's Box](https://youtu.be/mLxDzAsIg7I) which help us to compute the denominator (normalising constant), and hence the posterior, by hand:
 
-EMPTY BOX
-BOX WITH FIRST COLUMN FILLED
+```{r bayes box, echo = FALSE}
+
+tibble(
+  Parameter = c("C", "1" , "2", "3", "Total"),
+  Likelihood = c("$Pr(X = 1 \\mid C =c)$", "$\\theta_1$ = 1/4", "$\\theta_2$ = 2/4", "$\\theta_2$ = 3/4", "6/4"),
+  Prior = c("$Pr(C = c)$", "1/3", "1/3", "1/3", "1"),
+  `Likelihood $\\times$ Prior` = c("$Pr(X = 1 \\mid C = c) \\times Pr(C=c)$", "1/12", "2/12", "3/12", "6/12"),
+  Posterior = c("$Pr(C = c \\mid X = 1)$", "(1/12)/(6/12) = 1/6", "(2/12)/(6/12) = 2/6", "(3/12)/(6/12) = 3/6", "1")
+) %>%
+  knitr::kable(escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
+  row_spec(0, bold = T, background = theme_color, color = "white", font_size = 15, align = "c") %>%
+  row_spec(c(1,3), bold = F, background = "#fafafa", font_size = 14) %>%
+  row_spec(c(2,4), bold = F, background = "transparent", font_size = 14) %>%
+  row_spec(5, bold = T, background = "#f1f1f1", font_size = 15) %>%
+  row_spec(1, font_size = 13)
+
+```
+
+---
+
+Looking at the table we can confirm that:
+
+- The **Likelihood** is not a valid probability distribution (I know I'm repeating this _ad nauseum_ but repetition is at the core of learning)
+- The **Posterior** is a valid (discrete) probability distribution, i.e. $\sum_{c=1}^{3} Pr(C =c \mid X = 1) = 1$
+- The denominator is a constant, with value $1/6$.
+
+## Multiple coin tosses
+
+For $n$ tosses of the same coin, our random variable $X$ now represents the number of times we record heads as the outcome of each toss: $X \in \{0,1,\ldots,n\}$.
+
+We recover the likelihood function from above
+
+For two coin tosses and $X = 2$, we have: # REF #
+
+```{r two coin tosses}
+x     = 2 # number of heads
+c     = 1:3
+theta = c(0.25, 0.50, 0.75)
+
+lik   = dbinom(x = 2, size = 2, p = theta) # likelihood
+prior = rep(1/3, 3)
+num   = lik * prior # numerator
+denom = sum(num) # denominator
+post  = num/denom # posterior
+```
+
+```{r bayes box 2, echo = FALSE}
+tibble(
+  Parameter = c("C", "1" , "2", "3", "Total"),
+  Likelihood = c("$Pr(X = 1 \\mid C =c)$", format(lik, digits = 3), as.character(sum(lik))),
+  Prior = c("$Pr(C = c)$", format(prior, digits = 3), as.character(sum(prior))),
+  `Likelihood $\\times$ Prior` = c("$Pr(X = 1 \\mid C = c) \\times Pr(C=c)$", format(num, digits = 3), format(denom, digits = 3)),
+  Posterior = c("$Pr(C = c \\mid X = 1)$", format(post, digits = 3), as.character(sum(post)))
+) %>%
+  knitr::kable(escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
+  row_spec(0, bold = T, background = theme_color, color = "white", font_size = 15, align = "c") %>%
+  row_spec(c(1,3), bold = F, background = "#fafafa", font_size = 14) %>%
+  row_spec(c(2,4), bold = F, background = "transparent", font_size = 14) %>%
+  row_spec(5, bold = T, background = "#f1f1f1", font_size = 15) %>%
+  row_spec(1, font_size = 13)
+
+```
+
+And we wrap up this section with a nice animation with the awesome `ggplot + gganimate` combo:
 
 
-If we assume that the 3 coins are equally likely to be picked (a discrete uniform prior), we can construct a prior for :
 
-$$
-Pr(X = x \mid C) = Pr()
-$$
-BOX WITH SECOND COLUMN FILLED
+# An informative prior
+
