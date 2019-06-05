@@ -41,38 +41,18 @@ Let:
 - $X = \{T, H\} = \{0,1\}$ denote the outcome of the coin toss
 - $\theta_c$ denote the probability of heads of coin $C = c$.
 
-Note that $X$ and $C$ are random variables and $\theta_c$ is our parameter set $\forall c \in C$.
+Note that $X$ and $C$ are random variables and $\theta_c, \forall c \in C$ is our parameter set (total of 3 parameters).
 
-We can use the binomial distribution to model the outcome of $n$ (independent) coin tosses. If there was only a coin in the bag, this leads to the standard binomial likelihood function that you might be familiar with (don't worry if you're not!):
-
-$$
-L(\theta \mid x) = Pr(X = x \mid \theta) = \binom{n}{x} \theta^{x}(1-\theta)^{n-x}
-$$
-
-where $\theta$ is the probability of heads of the single hypothetical coin. That means that the likelihood, using the equivalence relation, is function of $\theta$ given the data. And the data is composed of just two values: $n$, the number of tosses, and $x$, the number of observed heads.
-From now on we simply use the notation $Pr(X = x)$ to denote the probability mass of $X$ given $\theta$.  Making this explicit is useful at first, especially for begginers, but then it just adds clutter to our notation, so we do without it.
-
-If we consider a **single** coin toss with $x = 1$ (heads), the above likelihood simplifies to:
+For a **single** coin toss $X = 1$ (heads), we can calculate the probability of getting heads, given the identity of the coin:
 
 $$
-L(\theta \mid x) = Pr(X = 1) = \theta
+Pr(X = 1 \mid C = c) = \theta_c
 $$
 
-However, in this instance, we need to take into account the identity of the coin, which we don't know with certainty. That means, that we need to include the outcome of the first _experiment_ ($C = c$) in our model.
-
-For $n$ coin tosses of the **same coin** $c$, the likelihood function is:
+Using the equivalence relation^[see chapter 4 of the book for more details] we can calculate the likelihood of the coin's identity given the data:
 
 $$
-\begin{equation}
-  L(\theta_c \mid x) = Pr(X = x \mid C = c) = \binom{n}{x} \theta_{c}^{x}(1-\theta_{c})^{n-x}
-  (\#eq:binom)
-\end{equation}
-$$
-
-For a single coin toss $x = 1$ (heads), this simplifies to:
-
-$$
-L(\theta_c \mid x) = Pr(X = 1 \mid C = c) = \theta_c
+L(C = c \mid X = 1) = Pr(X = 1 \mid C = c) = \theta_c
 $$
 
 The sum of the likelihood of all parameter values, in this instance, is hence given by:
@@ -86,7 +66,7 @@ And here's a plot of the likelihood:
 ```{r likelihood}
 tibble(
   c = 1:3,
-  theta = c(0.25, 0.50, 0.75)
+  theta = c(0.75, 0.50, 0.25)
 ) %>%
   ggplot() +
   geom_col(
@@ -101,13 +81,13 @@ tibble(
   
 ```
 
-Note that, the likelihood function is discrete because we know the probabilities of heads (values of $\theta_c$). In the classic coin tossing problem, we are given the outcome of $n$ coin tosses and want to infer $\theta$ for a single coin. The resulting likelihood function in that case is continuous, as we vary $\theta$. In this instance, we want to infer the hidden identity of the coin $C$, and $\theta$ can only take one of 3 values. These two problems end up being quite different!
+Note that the likelihood function is discrete because the hidden quantity is the coin's identity rather than the probability of heads (we know $\theta_c$ for all $c$). In the classic coin tossing problem, our knowledge is reversed. We are given the outcome of $n$ coin tosses and want to infer $\theta$ for a single coin. The resulting likelihood function in that case is continuous, as we vary $\theta$ to figure out which values were more likely to generate the observed quantity $x$. Even though in both problems we're talking about coins, they end up being quite different!
 
-We can visually see that the maximum likelihood estimate for the coin's identity in this case is $\theta_{ML} = \theta_c = 0.75$.
+We can visually see that the maximum likelihood estimate for the coin's identity in this case is $C_{ML} = \text{argmax}(0.75) = 1$.
 
 # The posterior with a uniform prior
 
-The goal of Bayesian inference is to compute the posterior, i.e. the probability of our parameters (and model) given the data. In this case that means computing:
+The goal of Bayesian inference is to compute the posterior, i.e. the probability of the parameters given the data. In this case that means computing:
 
 $$
 Pr(C = c \mid X = x)
@@ -125,13 +105,15 @@ where:
 - $Pr(C = c)$ is the probability of the parameters before seeing the data (prior belief), a.k.a the **prior**
 - $Pr(X = x)$ is the probability of the data, a.k.a the marginal probability of the data.
   
-By the law of total probability, the denominator can be re-written as:
+By the [law of total probability](https://en.wikipedia.org/wiki/Law_of_total_probability), the denominator can be re-written as:
 
 $$
-Pr(X = x) = \sum_{c} Pr(X = x \mid C = c) \times Pr(C = c)
+Pr(X = x) = \sum_{y} Pr(X = x \mid C = y) \times Pr(C = y)
 $$
 
-Because the likelihood is not a valid probability distribution, it's the job of the denominator to make sure that the posterior is a valid probability distribution. That is why the denominator is often interpreted as a normalising constant (it can also be interpreted as a probability distribution). We can therefore write that the posterior is proportional to the likelihood times the prior^[Please refer to [Ben Lambert's book](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/) for more details.]:
+where we use $y$ instead of $c$ to denote that the sum is over all possible values of $C$ and avoid confusion between the two variables.
+
+Because the likelihood is not a valid probability distribution, it's the job of the denominator to make sure that the posterior is one. That is why the denominator is often interpreted as a normalising constant (it can also be interpreted as a probability distribution). We can therefore write that the posterior is proportional to the likelihood times the prior^[see chapter 6 and 7 of [Ben Lambert's book](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/) for more details.]:
 
 $$
 Pr(C = c \mid X = x) \propto \Pr(X = x \mid C = c) \times Pr(C = c)
@@ -139,16 +121,33 @@ $$
 
 ## A single coin toss
 
-Continuing with the example of a single coin toss $x = 1$, we now assume that the 3 coins are equally likely to be picked. This is equivalent to picking the discrete uniform distribution for our prior. Now that we understand how to calculate the likelihood and prior, we introduce [Baye's Box](https://youtu.be/mLxDzAsIg7I) which help us to compute the denominator (normalising constant), and hence the posterior, by hand:
+Continuing with the example of a single coin toss $x = 1$, we now assume that the 3 coins are equally likely to be picked from the bag. This is equivalent to choosing the discrete uniform distribution for our prior:
+
+$$
+Pr(C = c) = 1/3
+$$
+
+This is clearly a valid probability distribution as $\sum_{c=1}^{3} Pr(C=c) = 1$. We usually want to use valid probability distributions for our priors to ensure that the posterior is also one^[please refer to chapters 5 the book for a more in depth discussion on the validity of priors].
+
+Now that we understand how to calculate the likelihood and prior, we introduce [Baye's Box](https://youtu.be/mLxDzAsIg7I) which help us to compute the denominator (normalising constant), and hence the posterior, by hand:
 
 ```{r bayes box, echo = FALSE}
+x     <- 1 # number of heads
+c     <- 1:3
+theta <-  c(0.75, 0.50, 0.25)
+
+lik   <- dbinom(x = 1, size = 1, p = theta) # likelihood
+prior <- rep(1/3, 3)
+num   <- lik * prior # numerator
+denom <- sum(num) # denominator
+post  <- num/denom # posterior
 
 tibble(
   Parameter = c("C", "1" , "2", "3", "Total"),
-  Likelihood = c("$Pr(X = 1 \\mid C =c)$", "$\\theta_1$ = 1/4", "$\\theta_2$ = 2/4", "$\\theta_2$ = 3/4", "6/4"),
-  Prior = c("$Pr(C = c)$", "1/3", "1/3", "1/3", "1"),
-  `Likelihood $\\times$ Prior` = c("$Pr(X = 1 \\mid C = c) \\times Pr(C=c)$", "1/12", "2/12", "3/12", "6/12"),
-  Posterior = c("$Pr(C = c \\mid X = 1)$", "(1/12)/(6/12) = 1/6", "(2/12)/(6/12) = 2/6", "(3/12)/(6/12) = 3/6", "1")
+  Likelihood = c("$Pr(X = 1 \\mid C =c)$", paste0(c("3/4 = ", "2/4 = ", "1/4 = "), format(lik, digits = 3)), as.character(sum(lik))),
+  Prior = c("$Pr(C = c)$", paste0(c("1/3 = "), format(prior, digits = 3)), as.character(sum(prior))),
+  `Likelihood $\\times$ Prior` = c("$Pr(X = 1 \\mid C = c) \\times Pr(C=c)$", paste0(c("3/12 = ", "2/12 = ", "1/12 = "), format(num, digits = 3)), paste0("6/12 = ", format(denom, digits = 3))),
+  Posterior = c("$Pr(C = c \\mid X = 1)$", paste0(c("3/6 = ", "2/6 = ", "1/6 = "), format(post, digits = 3)), as.character(sum(post)))
 ) %>%
   knitr::kable(escape = FALSE) %>%
   kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
@@ -165,19 +164,26 @@ tibble(
 Looking at the table we can confirm that:
 
 - The **Likelihood** is not a valid probability distribution (I know I'm repeating this _ad nauseum_ but repetition is at the core of learning)
+- The **Prior** is a valid (discrete) probability distribution
 - The **Posterior** is a valid (discrete) probability distribution, i.e. $\sum_{c=1}^{3} Pr(C =c \mid X = 1) = 1$
-- The denominator is a constant, with value $1/6$.
+- The denominator is calculated as the sum of the likelihood times the prior over all possible values parameter values, and its job is to normalise the posterior (the normalising constant).
 
 ## Multiple coin tosses
 
-For $n$ tosses of the same coin, our random variable $X$ now represents the number of times we record heads: $X \in \{0,1,\ldots,n\}$. And for a given sample of $x$ heads, we can calculate the likelihood using the formula for the binomial probability mass function, introduced above \@ref(eq:binom).
+For $n$ tosses of the same coin, we adapt the random variable $X$ to represent the number of times we record heads in $n$ coin tosses: $X \in \{0,1,\ldots,n\}$. For a given sample of $x$ heads, we can calculate the likelihood using the probability mass function for the binomial distribution, which models the outcome of $n$ independent [Bernoulli trials](https://en.wikipedia.org/wiki/Bernoulli_trial) (only two possible outcomes per trial):
 
+$$
+\begin{equation}
+  L(C = c \mid x) = Pr(X = x \mid C = c) = \binom{n}{x} \theta_{c}^{x}(1-\theta_{c})^{n-x}
+  (\#eq:binom)
+\end{equation}
+$$
 Therefore, for two coin tosses and $X = 2$, we have:
 
 ```{r two coin tosses}
 x     <- 2 # number of heads
 c     <- 1:3
-theta <-  c(0.25, 0.50, 0.75)
+theta <-  c(0.75, 0.50, 0.25)
 
 lik   <- dbinom(x = 2, size = 2, p = theta) # likelihood
 prior <- rep(1/3, 3)
@@ -201,14 +207,12 @@ tibble(
   row_spec(c(2,4), bold = F, background = "transparent", font_size = 14) %>%
   row_spec(5, bold = T, background = "#f1f1f1", font_size = 15) %>%
   row_spec(1, font_size = 13)
-
 ```
 ---
 
-And here's a visualisation just because the `ggplot + gganimate` combo is awesome:
+And here's a visualisation for an experiment with $n=10$ just because the `ggplot + gganimate` combo is awesome. Note how the shape of the posterior resembles the one of the likelihood, given a uniform prior:
 
 ```{r binom anim, echo = FALSE}
-
 n <- 10
 
 simul <- 
@@ -228,11 +232,11 @@ simul <-
     denominator = sum(numerator),
     posterior = numerator/denominator
   ) %>%
+  select(-c(numerator, denominator)) %>%
   gather(key = "key", value = "value",
-         likelihood, prior, numerator, denominator, posterior) %>%
+         likelihood, prior, posterior) %>%
   mutate(key = factor(key,
-                     levels = c("likelihood", "prior", "posterior",
-                                "numerator", "denominator")))
+                     levels = c("likelihood", "prior", "posterior")))
 
 anim_p <- 
   simul %>%
@@ -257,12 +261,25 @@ animate(anim_p)
 
 # An informative prior
 
-In the previous section we introduced an uninformative prior for $C$. It is intuitive why a uniform prior is uninformative in this case as, in some sense, it lets the data speak for itself, and the resulting shape of the posterior is fully determined by the likelihood. However, a flat prior is not always uninformati
+In the previous section we introduced an uninformative prior for $C$. Despite flat priors being often interpreted as uninformative, its use is discouraged by prominent Bayesian statisticians. Instead, weakly informative priors should often guide an objective analysis (let the data speak for itself). The discussion about the subjectivity and objectivity of Bayesian priors is a long and contentious one. Please refer to the [book](https://ben-lambert.com/a-students-guide-to-bayesian-statistics/) and works of [Gelman](https://scholar.google.co.uk/citations?user=SEOgduoAAAAJ), among others, for more details.
+
+Here, the book provides an example of an informative prior, which places much belief on the coin's identity being biased towards tails:
+
+$$
+\begin{align}
+Pr(C = 1) &= 1/20\\
+Pr(C = 2) &= 5/20\\
+Pr(C = 3) &= 14/20
+\end{align}
+$$
+
+We now use Baye's box again to compute the marginal and posterior distributions, and understand how changing the prior affects the posterior and the resulting inference:
 
 ```{r two coin tosses informative prior}
+
 x     <- 2 # number of heads
 c     <- 1:3
-theta <- c(0.25, 0.50, 0.75)
+theta <- c(0.75, 0.50, 0.25)
 
 lik   <- dbinom(x = 2, size = 2, p = theta) # likelihood
 prior <- c(1/20, 5/20, 14/20)
@@ -272,6 +289,7 @@ post  <- num/denom # posterior
 ```
 
 ```{r bayes box 3, echo = FALSE}
+
 tibble(
   Parameter = c("C", "1" , "2", "3", "Total"),
   Likelihood = c("$Pr(X = 2 \\mid C =c)$", format(lik, digits = 3), as.character(sum(lik))),
@@ -290,8 +308,24 @@ tibble(
 ```
 ---
 
-```{r binom anim 2, echo = FALSE}
+We can now calculate summary statistics of our posterior distribution:
 
+```{r summary posterior}
+# Posterior Mean
+sum(post * c)
+
+# Maximum a posterior (MAP) estimate for c
+which.max(post)
+
+# Maximum likelihood estimate
+which.max(lik)
+```
+
+The posterior mean in this instance is very close to $c=2$, so if we had to make a decision about the coin's identity that would be relatively straightforward. In one sense, it is useful because it tells us how close the expected value is to each parameter value. However, we can imagine that, with a different dataset, the resulting mean could lie between parameter values (e.g. 1.5). In that instance, making a decision about the coin's identity would be a lot more difficult using the mean. The **MAP** (Maximum A Posteriori) or maximum likelihood estimate, on the other hand, always give a straight answer. In this case, they disagree due to the effect of the prior: $C_{MAP}=2$, $C_{ML}=3$.
+
+And here's the same visualisation as before, for an experiment with $n=10$, for the new prior. Note how the shapes of the posterior and likelihood are now different.
+
+```{r binom anim 2, echo = FALSE}
 n <- 10
 
 simul <- 
@@ -337,39 +371,65 @@ anim_p <-
 animate(anim_p)
 ```
 
-We can now calculate summary statistics of our posterior distribution:
-
-```{r summary posterior}
-# Posterior Mean
-mean(post)
-
-# Maximum a posterior (MAP) estimate = Maximum Likelihood estimate
-max(post)
-```
-
-The posterior mean in this instance is not a very useful summary statistic or point estimate, as its value lies between the probability mass assigned to parameters values $c=2$ and $c=3$.  This is because of the discrete nature of $C$. If we had to make a decision about which of the coin is more likely to have been picked, this would be very difficult to do using the mean. The **MAP** (Maximum A Posteriori) or maximum likelihood estimate, on the other hand, would give us a straight answer ($c=3$).
 
 # The Posterior Predictive Distribution
 
-One way to evaluate the model is to check how well it can reproduce the data generating process. We can do this via the posterior predictive distribution. Considering the single coin toss example again: $n =1, x = 1$, with the uniform prior on C, the posterior predictive distribution can be obtained using the expression:
+Consider the single coin toss example again: $n =1, x = 1$. If we where to flip the coin a second time, how does first observing heads change our belief about the outcome of the second flip? Are we more, less or equally confident about obtaining heads in the second flip?
+
+We can answer this question via the posterior predictive distribution. With the uniform prior on $C$, the posterior predictive distribution, in this case, can be obtained using the expression:
 
 $$
 Pr(\tilde{X} \mid X = 1) =  \sum_{c=1}^{3} Pr(\tilde{X} \mid C) \times Pr(C \mid X = 1)
 $$
 
-Where does this expression come from?
+where $\tilde{X}$ is the result of a new coin flip. But where does this expression come from?
+
+- $Pr(\tilde{X} \mid C)$ is the likelihood of new data $\tilde{X} \in \{0,1\}$ given the coin's identity $C$. Guess what? It's the same expression that we used before: the binomial distribution!
+
+$$
+\begin{align}
+& Pr(\tilde{X} = 1 \mid C = 1) = \theta_1 \\
+& Pr(\tilde{X} = 1 \mid C = 2) = \theta_2 \\
+& \ldots \\
+& Pr(\tilde{X} = 0 \mid C = 3) = 1 - \theta_3
+\end{align}
+$$
+
+- $Pr(C \mid X = 1)$ is the posterior that we've also calculated above:
+
+$$
+\begin{align}
+& Pr(C = 1 \mid X = 1) = 3/6\\
+& Pr(C = 2 \mid X = 1) = 2/6\\
+& Pr(C = 3 \mid X = 1) = 1/6
+\end{align}
+$$
+
+You can interpret the posterior predictive distribution as the average of the probability of a single coin toss (likelihood) weighted by the posterior. For instance, if we want to find the probability of a new coin toss resulting heads, then we average $\theta_c$ over all values of $c$, weighted by how likely we think that each parameter is to occur given the previously observed outcome. It is the posterior that provides the weights for each parameter!
+
+In general, to find the posterior predictive distribution, you sample a parameter value from the posterior, feed that into your likelihood function, repeat the process many times and :boom: you have a probability distribution capable of predicting new data based on the old data!
 
 ```{r posterior pred}
 x     <- 1 # number of heads
 c     <- 1:3
-theta <- c(0.25, 0.50, 0.75)
-post  <- c(1/6, 2/6, 3/6)
+theta <- c(0.75, 0.50, 0.25)
+post  <- c(3/6, 2/6, 1/6)
 
-xtilde <- c(0,1)
-lik_xtilde <- matrix(c(1-theta, theta), nrow = 2, byrow = TRUE)
-post.pred <- lik_xtilde %*% matrix(post, nrow = 3)
-rownames(post.pred) <- c("Pr(new_X | X = 0) = ", "Pr(new_X | X = 1) = ")
+new_x <- c(0,1)
+lik_new_x <- matrix(c(1-theta, theta),
+                    nrow = 2,
+                    byrow = TRUE)
+
+post.pred <- lik_new_x %*% matrix(post, nrow = 3)
+
+rownames(post.pred) <- c("Pr(new_X = 0 | X = 1) = ", "Pr(new_X = 1 | X = 1) = ")
 colnames(post.pred) <- ""
 
 post.pred
 ```
+
+So, if we had to guess the next coin flip, based on the first outcome being heads (and our model: prior + likelihood), we'd probably put our money on heads.
+
+Model evaluation is about checking how well it can reproduce the data generating process. Maybe our likelihood function is not adequate. Maybe our choice of prior is poor. The posterior predictive distribution is one way to address these questions. But there is a lot more to model evaluation than just computing the posterior predictive distribution (in most instances we can only approximate it by sampling from the posterior). In short, how good your model is depends on its ability to generate extreme values present in the data. Read more about this topic on chapter 10 of the book.
+
+In the meantime, happy modelling &#8745; coding!
