@@ -1,0 +1,91 @@
+---
+title: The Bayesian denominator of too many coin flips
+author: Pedro Pinto da Silva
+date: '2019-06-19'
+slug: the-bayesian-denominator-of-too-many-coin-flips
+categories: ['stats']
+tags: ['stats-101', 'book-lambert', 'lambert-chapter-6']
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache =TRUE)
+library(tidyverse)
+library(gganimate)
+library(kableExtra)
+library(formattable)
+
+theme_color = "#5D8AA8"
+```
+
+# The problem
+
+Today we look at problem 6.1 _Too many coin flips_, from Ben Lambert's book _A Student's Guide to Bayesian Statistics_.
+
+We continue working with coins.
+
+This time around we have 2 coins, whose nature we are unsure about (probability of heads). However, we know that each coin $i$ can be fair ($\theta_i = 0.5$) or biased towards heads ($\theta_i = 0.9$).
+
+# A uniform start
+
+Suppose that:
+
+- we flip each coin twice: $n = 2$
+- we place a discrete uniform prior on the coin's identity $i$
+
+**Q:** What is the joint distribution of the data and the coins' identity?
+
+First things first, let $X_i$ be the number of heads in $n$ throws of coin $i$. Then the joint distribution of interest is:
+
+$$
+Pr(X_1, X_2, \theta_1, \theta_2) = Pr(X_{1:2}, \theta_{1:2})
+$$
+
+If we assume that the two coin throws are independent (i.e. the outcome of throwing coin 1 does not affect the outcome throwing coin 2), then:
+
+$$
+Pr(X_{1:2}, \theta_{1:2}) = \prod_{i = 1}^{2} Pr(X_i, \theta_i) = \prod_{i = 1}^{2} Pr(X_i \mid \theta_i) \times Pr(\theta_i)
+$$
+
+
+Note that, for each coin, we can write the joint ($Pr(X_i, \theta_i)$) as the product of the conditional distribution of the data given the parameters $Pr(X_i \mid \theta_i)$ and the distribution of the coin's identity ($Pr(\theta_i)$). Therefore, if we know how to calculate these two terms, then we can easily compute the whole thing:
+
+- the binomial distribution is an adequate probability distribution to model the outcome of $n$ independent coin flips (we've seen in a [previous post](/2019/06/05/bayesian-priors-and-dodgy-coins/)), given the coins identity:
+
+$$
+Pr(X_i = x_i \mid \theta_i) = \binom{n}{x_i} \theta_{i}^{x_i}(1-\theta_{i})^{n-x_i}
+$$
+
+
+- the uniform assumption over the coin's identity tells us how to calculate $Pr(\theta_i)$:
+
+$$
+\begin{align}
+Pr(\theta_i = 1) = 1/2 , \quad Pr(\theta_i = 2) = 1/2\\
+\end{align}
+$$
+
+
+```{r joint}
+n = 2
+
+joint_p <- function(x, theta, prior) {
+  i = 1:length(x)
+  prod(sapply(i, function(x,y) dbinom(x)) * prior)
+}
+
+joint = 
+  tibble(
+    theta1 = c(0.5, 0.9, 0.5),
+    theta2 = c(0.5, 0.9, 0.5),
+    X1 = 0:2,
+    X2 = 0:2 
+) %>%
+  expand(theta1, theta2, X1, X2) %>%
+  mutate(prior = 1/2) %>%
+  mutate(p = dbinom(X1, n, theta1) * prior * dbinom(X2, n, theta2) * prior)
+
+```
