@@ -56,7 +56,7 @@ Note that, for each coin, we can write the joint ($Pr(X_i, \theta_i)$) as the pr
 - the binomial distribution is an adequate probability distribution to model the outcome of $n$ independent coin flips (we've seen in a [previous post](/2019/06/05/bayesian-priors-and-dodgy-coins/)), given the coins identity:
 
 $$
-Pr(X_i = x_i \mid \theta_i) = \binom{n}{x_i} \theta_{i}^{x_i}(1-\theta_{i})^{n-x_i}
+Pr(x_i \mid \theta_i) = \binom{n}{x_i} \theta_{i}^{x_i}(1-\theta_{i})^{n-x_i}
 $$
 
 
@@ -69,23 +69,104 @@ Pr(\theta_i = 1) = 1/2 , \quad Pr(\theta_i = 2) = 1/2\\
 $$
 
 
-```{r joint}
-n = 2
-
-joint_p <- function(x, theta, prior) {
-  i = 1:length(x)
-  prod(sapply(i, function(x,y) dbinom(x)) * prior)
+```{r joint, echo = FALSE, eval = FALSE}
+coins_tibble <- function(n, theta) {
+  ncoins <- length(theta)
+  
+  comb <- expand.grid(rep(list(theta = theta, x = 0:ncoins), ncoins))
+  column_names <- paste0(c("theta_", "x_"), sapply(1:ncoins, function(i) rep(i, ncoins)))
+  colnames(comb) <- column_names
+  
+  comb <-
+    comb %>%
+    as_tibble() %>%
+    rowid_to_column(var = "case")
+  
+  comb_theta <- 
+    comb %>%
+    gather(paste0("theta_", 1:ncoins), key = "theta_i", value = "theta") %>%
+    separate(theta_i, c("dummy","i"), "_") %>%
+    mutate(i = as.numeric(i)) %>%
+    select(-c(paste0("x_", 1:ncoins), dummy))
+  
+  comb_x <- 
+    comb %>%
+    gather(paste0("x_", 1:ncoins), key = "x_i", value = "x") %>%
+    separate(x_i, c("dummy","i"), "_") %>%
+    mutate(i = as.numeric(i)) %>%
+    select(-c(paste0("theta_", 1:ncoins), dummy))
+  
+  list(
+    comb = comb,
+    df   = 
+      inner_join(comb_theta, comb_x, by = c("case", "i")) %>%
+      mutate(n = n)
+  )
 }
 
-joint = 
+prior <- c(1/2, 1/2)
+
+l = coins_tibble(2, c(0.5, 0.9))
+
+l_joint <-
+  l$df %>%
+  mutate(prior = prior[i]) %>%
+  mutate(p = dbinom(x, n, theta) * prior) %>%
+  group_by(case) %>%
+  summarise(joint_p = prod(p)) %>%
+  inner_join(l$comb, by = "case")
+
+l_joint
+
+ l_joint %>%
+  summarise(sum(joint_p))
+```
+
+And a little code to do the computation for us:
+
+```{r joint dist}
+joint <- 
   tibble(
+    x1     = c(0, 1, 2),
+    x2     = c(0, 1, 2),
     theta1 = c(0.5, 0.9, 0.5),
-    theta2 = c(0.5, 0.9, 0.5),
-    X1 = 0:2,
-    X2 = 0:2 
-) %>%
-  expand(theta1, theta2, X1, X2) %>%
-  mutate(prior = 1/2) %>%
-  mutate(p = dbinom(X1, n, theta1) * prior * dbinom(X2, n, theta2) * prior)
+    theta2 = c(0.5, 0.9, 0.5)
+  ) %>%
+  expand(x1, x2, theta1, theta2) %>%
+  mutate(
+    n     = 2,
+    prior1 = 1/2,
+    prior2 = 1/2
+  ) %>%
+  mutate(
+    p1 = dbinom(x1, n, theta1) * prior1,
+    p2 = dbinom(x2, n, theta2) * prior2
+  ) %>%
+  mutate(p = p1 * p2)
 
 ```
+
+```{r joint table, echo = FALSE}
+joint %>%
+  select(-c(n, prior1, prior2, p1, p2)) %>%
+  knitr::kable(escape = FALSE)
+  # print(n = 36)
+  # pull(p) %>%
+  # matrix(
+  #   nrow = 3^2,
+  #   ncol = 2^2,
+  #   dimnames = list(
+  #     joint %>% unite("x1_x2", )
+  #   )) %>%
+  # knitr::kable(escape = FALSE)
+```
+
+We can verify that the above distribution is a valid probability distribution:
+
+```{r verify valid dist}
+joint %>%
+  summarise(sum(p))
+```
+
+# One likelihood to rule them all
+
