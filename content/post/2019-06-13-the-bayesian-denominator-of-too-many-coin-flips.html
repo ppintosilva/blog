@@ -1,0 +1,1219 @@
+---
+title: The Bayesian denominator of too many coin flips
+author: Pedro Pinto da Silva
+date: '2019-06-19'
+slug: the-bayesian-denominator-of-too-many-coin-flips
+categories: ['stats']
+tags: ['stats-101', 'book-lambert', 'lambert-chapter-6']
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#a-uniform-start">A uniform start</a></li>
+<li><a href="#one-likelihood-to-rule-them-all">One likelihood to rule them all</a></li>
+<li><a href="#the-devil-is-in-the-denominator">The devil is in the denominator</a></li>
+<li><a href="#hey-mr-postman">Hey, Mr Postman!</a></li>
+<li><a href="#the-new-coin-in-the-block">The new coin in the block</a></li>
+</ul>
+</div>
+
+<div id="the-problem" class="section level1">
+<h1>The problem</h1>
+<p>Today we look at problem 6.1 <em>Too many coin flips</em>, from Ben Lambert’s book <em>A Student’s Guide to Bayesian Statistics</em>.</p>
+<p>We continue working with coins.</p>
+<p>This time around we have 2 coins, whose nature we are unsure about (probability of heads). However, we know that each coin <span class="math inline">\(i\)</span> can be fair (<span class="math inline">\(\theta_i = 0.5\)</span>) or biased towards heads (<span class="math inline">\(\theta_i = 0.9\)</span>).</p>
+</div>
+<div id="a-uniform-start" class="section level1">
+<h1>A uniform start</h1>
+<p>Suppose that:</p>
+<ul>
+<li>we flip each coin twice: <span class="math inline">\(n = 2\)</span></li>
+<li>we place a discrete uniform prior on the coin’s identity <span class="math inline">\(i\)</span></li>
+</ul>
+<p><strong>Q:</strong> What is the joint distribution of the data and the coins’ identity?</p>
+<p>First things first, let <span class="math inline">\(X_i\)</span> be the number of heads in <span class="math inline">\(n\)</span> throws of coin <span class="math inline">\(i\)</span>. Then the joint distribution of interest is:</p>
+<p><span class="math display">\[
+Pr(X_1, X_2, \theta_1, \theta_2) = Pr(X_{1:2}, \theta_{1:2})
+\]</span></p>
+<p>If we assume that the two coin throws are independent (i.e. the outcome of throwing coin 1 does not affect the outcome throwing coin 2), then:</p>
+<p><span class="math display">\[
+Pr(X_{1:2}, \theta_{1:2}) = \prod_{i = 1}^{2} Pr(X_i, \theta_i) = \prod_{i = 1}^{2} Pr(X_i \mid \theta_i) \times Pr(\theta_i)
+\]</span></p>
+<p>Note that, for each coin, we can write the joint (<span class="math inline">\(Pr(X_i, \theta_i)\)</span>) as the product of the conditional distribution of the data given the parameters <span class="math inline">\(Pr(X_i \mid \theta_i)\)</span> and the distribution of the coin’s identity (<span class="math inline">\(Pr(\theta_i)\)</span>). Therefore, if we know how to calculate these two terms, then we can easily compute the whole thing:</p>
+<ul>
+<li>given the coins identity, the binomial distribution can be used to model the outcome of <span class="math inline">\(n\)</span> independent coin flips (we’ve seen in a <a href="/2019/06/05/bayesian-priors-and-dodgy-coins/">previous post</a>):</li>
+</ul>
+<p><span class="math display">\[
+Pr(x_i \mid \theta_i) = \binom{n}{x_i} \theta_{i}^{x_i}(1-\theta_{i})^{n-x_i}
+\]</span></p>
+<ul>
+<li>the uniform assumption over the coin’s identity tells us how to calculate <span class="math inline">\(Pr(\theta_i)\)</span>:</li>
+</ul>
+<p><span class="math display">\[
+\begin{align}
+Pr(\theta_i = 1) = 1/2 , \quad Pr(\theta_i = 2) = 1/2\\
+\end{align}
+\]</span></p>
+<p>And a little code to do the computation for us:</p>
+<pre class="r"><code>joint &lt;- 
+  tibble(
+    x1     = c(0, 1, 2),
+    x2     = c(0, 1, 2),
+    theta1 = c(0.5, 0.9, 0.5),
+    theta2 = c(0.5, 0.9, 0.5)
+  ) %&gt;%
+  expand(x1, x2, theta1, theta2) %&gt;%
+  mutate(
+    n     = 2,
+    prior1 = 1/2,
+    prior2 = 1/2
+  ) %&gt;%
+  mutate(
+    # lik1 = theta1 ** 2,
+    # lik2 = theta2 * (1 - theta2),
+    lik1 = dbinom(x1, n, theta1),
+    lik2 = dbinom(x2, n, theta2),
+    num1 = lik1 * prior1,
+    num2 = lik2 * prior2,
+  ) %&gt;%
+  mutate(p = num1 * num2)</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+x1
+</th>
+<th style="text-align:right;">
+x2
+</th>
+<th style="text-align:right;">
+theta1
+</th>
+<th style="text-align:right;">
+theta2
+</th>
+<th style="text-align:right;">
+p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.015625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.000625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.000625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.000025
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.031250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.011250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.001250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.000450
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.015625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.050625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.000625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.002025
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.031250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.001250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.011250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.000450
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.062500
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.022500
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.022500
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.008100
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.031250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.101250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.011250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.036450
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.015625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.000625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.050625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.002025
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.031250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.011250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.101250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.036450
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.015625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.050625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.050625
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.164025
+</td>
+</tr>
+</tbody>
+</table>
+<p>We can verify that the above distribution is a valid probability distribution:</p>
+<pre class="r"><code>joint %&gt;%
+  summarise(sum(p))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `sum(p)`
+##      &lt;dbl&gt;
+## 1    1.000</code></pre>
+</div>
+<div id="one-likelihood-to-rule-them-all" class="section level1">
+<h1>One likelihood to rule them all</h1>
+<p><span class="math display">\[
+\begin{align}
+L(\theta_{1:2} \mid x_{1:2}) &amp;= \prod_{i=1}^{2} L(\theta_i \mid x_i)\\
+&amp;= \prod_{i=1}^{2} Pr(X_i = x_i \mid \theta_i)\\
+&amp;= Pr(X_1 = 2 \mid \theta_1) \times Pr(X_2 = 1 \mid \theta_2)
+\end{align}
+\]</span></p>
+<pre class="r"><code>likelihood &lt;- 
+  joint %&gt;%
+  filter(x1 == 2 &amp; x2 == 1) %&gt;%
+  select(-c(n, prior1, prior2, num1, num2, p)) %&gt;%
+  mutate(lik = lik1 * lik2)
+
+likelihood %&gt;%
+  knitr::kable(escape = FALSE) %&gt;%
+  row_spec(which.max(likelihood$lik), bold = T, color = &quot;white&quot;, background = &quot;red&quot;)</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+x1
+</th>
+<th style="text-align:right;">
+x2
+</th>
+<th style="text-align:right;">
+theta1
+</th>
+<th style="text-align:right;">
+theta2
+</th>
+<th style="text-align:right;">
+lik1
+</th>
+<th style="text-align:right;">
+lik2
+</th>
+<th style="text-align:right;">
+lik
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:right;">
+0.1250
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+0.0450
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+2
+</td>
+<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+1
+</td>
+<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+0.9
+</td>
+<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+0.5
+</td>
+<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+0.81
+</td>
+<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+0.50
+</td>
+<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+0.4050
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+0.1458
+</td>
+</tr>
+</tbody>
+</table>
+<p>The MLE for the parameters <span class="math inline">\(\theta_1,\theta_2\)</span> is the value of these parameters that maximises the likelihood: <span class="math inline">\(\theta_1 = 0.9, \theta_2 = 0.5\)</span>.</p>
+</div>
+<div id="the-devil-is-in-the-denominator" class="section level1">
+<h1>The devil is in the denominator</h1>
+<p><span class="math display">\[
+\begin{align}
+Pr(x_{1:2}) &amp;= \sum_{\theta_1} \sum_{\theta_2} Pr(x_{1:2}, \theta_{1:2})\\
+&amp;= \sum_{\theta_1}\sum_{\theta_2}Pr(x_{1:2} \mid \theta_{1:2}) Pr(\theta_{1:2})\\
+&amp;= \sum_{\theta_1}Pr(x_1 \mid \theta_1)Pr(\theta_1) \sum_{\theta_2} Pr(x_2 \mid \theta_2)Pr(\theta_2)
+\end{align}
+\]</span></p>
+<pre class="r"><code>numerator &lt;- 
+  joint %&gt;%
+  filter(x1 == 2 &amp; x2 == 1)
+
+numerator %&gt;%
+  knitr::kable(escape = FALSE)</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+x1
+</th>
+<th style="text-align:right;">
+x2
+</th>
+<th style="text-align:right;">
+theta1
+</th>
+<th style="text-align:right;">
+theta2
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+prior1
+</th>
+<th style="text-align:right;">
+prior2
+</th>
+<th style="text-align:right;">
+lik1
+</th>
+<th style="text-align:right;">
+lik2
+</th>
+<th style="text-align:right;">
+num1
+</th>
+<th style="text-align:right;">
+num2
+</th>
+<th style="text-align:right;">
+p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:right;">
+0.125
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.03125
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+0.125
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.01125
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:right;">
+0.405
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.10125
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+0.405
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.03645
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>denominator &lt;- 
+  numerator %&gt;%
+  summarise(value = sum(p)) %&gt;%
+  pull(value)
+
+denominator</code></pre>
+<pre><code>## [1] 0.1802</code></pre>
+</div>
+<div id="hey-mr-postman" class="section level1">
+<h1>Hey, Mr Postman!</h1>
+<p><span class="math display">\[
+Pr(\theta_{1:2} \mid x_{1:2}) = \frac{L(\theta_{1:2} \mid x_{1:2}) \times Pr(\theta_{1:2})}{Pr(x_{1:2})}
+\]</span></p>
+<pre class="r"><code>posterior &lt;- 
+  joint %&gt;%
+  filter(x1 == 2 &amp; x2 == 1) %&gt;%
+  mutate(denom = denominator) %&gt;%
+  mutate(post = p/denom)
+
+posterior %&gt;%
+  select(-c(n, prior1, prior2, num1, num2, p, lik1, lik2, p, denom)) %&gt;%
+  knitr::kable(escape = FALSE)</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+x1
+</th>
+<th style="text-align:right;">
+x2
+</th>
+<th style="text-align:right;">
+theta1
+</th>
+<th style="text-align:right;">
+theta2
+</th>
+<th style="text-align:right;">
+post
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.1734184
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.0624306
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.5
+</td>
+<td style="text-align:right;">
+0.5618757
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+<td style="text-align:right;">
+0.2022752
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>posterior %&gt;%
+  summarise(sum(post))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `sum(post)`
+##         &lt;dbl&gt;
+## 1           1</code></pre>
+<p>Mean of <span class="math inline">\(\theta_1\)</span>:</p>
+<p><span class="math display">\[
+E(\theta_1 \mid x_{1:2}, \theta_2) = \sum_{\theta_1} \theta_1 \sum_{\theta_2} Pr(\theta_{1}, \theta_2 \mid x_{1:2})
+\]</span></p>
+<pre class="r"><code>posterior_mean &lt;- 
+  posterior %&gt;%
+  group_by(theta1) %&gt;%
+  summarise(partial = sum(post)) %&gt;%
+  summarise(sum(theta1 * partial))
+
+posterior_mean</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `sum(theta1 * partial)`
+##                     &lt;dbl&gt;
+## 1                   0.806</code></pre>
+</div>
+<div id="the-new-coin-in-the-block" class="section level1">
+<h1>The new coin in the block</h1>
+</div>

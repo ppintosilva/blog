@@ -53,7 +53,7 @@ $$
 
 Note that, for each coin, we can write the joint ($Pr(X_i, \theta_i)$) as the product of the conditional distribution of the data given the parameters $Pr(X_i \mid \theta_i)$ and the distribution of the coin's identity ($Pr(\theta_i)$). Therefore, if we know how to calculate these two terms, then we can easily compute the whole thing:
 
-- the binomial distribution is an adequate probability distribution to model the outcome of $n$ independent coin flips (we've seen in a [previous post](/2019/06/05/bayesian-priors-and-dodgy-coins/)), given the coins identity:
+- given the coins identity, the binomial distribution can be used to model the outcome of $n$ independent coin flips (we've seen in a [previous post](/2019/06/05/bayesian-priors-and-dodgy-coins/)):
 
 $$
 Pr(x_i \mid \theta_i) = \binom{n}{x_i} \theta_{i}^{x_i}(1-\theta_{i})^{n-x_i}
@@ -139,16 +139,20 @@ joint <-
     prior2 = 1/2
   ) %>%
   mutate(
-    p1 = dbinom(x1, n, theta1) * prior1,
-    p2 = dbinom(x2, n, theta2) * prior2
+    # lik1 = theta1 ** 2,
+    # lik2 = theta2 * (1 - theta2),
+    lik1 = dbinom(x1, n, theta1),
+    lik2 = dbinom(x2, n, theta2),
+    num1 = lik1 * prior1,
+    num2 = lik2 * prior2,
   ) %>%
-  mutate(p = p1 * p2)
+  mutate(p = num1 * num2)
 
 ```
 
 ```{r joint table, echo = FALSE}
 joint %>%
-  select(-c(n, prior1, prior2, p1, p2)) %>%
+  select(-c(n, prior1, prior2, lik1, lik2, num1, num2)) %>%
   knitr::kable(escape = FALSE)
   # print(n = 36)
   # pull(p) %>%
@@ -170,3 +174,89 @@ joint %>%
 
 # One likelihood to rule them all
 
+$$
+\begin{align}
+L(\theta_{1:2} \mid x_{1:2}) &= \prod_{i=1}^{2} L(\theta_i \mid x_i)\\
+&= \prod_{i=1}^{2} Pr(X_i = x_i \mid \theta_i)\\
+&= Pr(X_1 = 2 \mid \theta_1) \times Pr(X_2 = 1 \mid \theta_2)
+\end{align}
+$$
+
+```{r likelihood}
+likelihood <- 
+  joint %>%
+  filter(x1 == 2 & x2 == 1) %>%
+  select(-c(n, prior1, prior2, num1, num2, p)) %>%
+  mutate(lik = lik1 * lik2)
+
+likelihood %>%
+  knitr::kable(escape = FALSE) %>%
+  row_spec(which.max(likelihood$lik), bold = T, color = "white", background = "red")
+```
+
+The MLE for the parameters $\theta_1,\theta_2$ is the value of these parameters that maximises the likelihood: $\theta_1 = 0.9, \theta_2 = 0.5$.
+
+# The devil is in the denominator
+
+$$
+\begin{align}
+Pr(x_{1:2}) &= \sum_{\theta_1} \sum_{\theta_2} Pr(x_{1:2}, \theta_{1:2})\\
+&= \sum_{\theta_1}\sum_{\theta_2}Pr(x_{1:2} \mid \theta_{1:2}) Pr(\theta_{1:2})\\
+&= \sum_{\theta_1}Pr(x_1 \mid \theta_1)Pr(\theta_1) \sum_{\theta_2} Pr(x_2 \mid \theta_2)Pr(\theta_2)
+\end{align}
+$$
+
+```{r denominator}
+numerator <- 
+  joint %>%
+  filter(x1 == 2 & x2 == 1)
+
+numerator %>%
+  knitr::kable(escape = FALSE)
+
+denominator <- 
+  numerator %>%
+  summarise(value = sum(p)) %>%
+  pull(value)
+
+denominator
+```
+
+# Hey, Mr Postman!
+
+$$
+Pr(\theta_{1:2} \mid x_{1:2}) = \frac{L(\theta_{1:2} \mid x_{1:2}) \times Pr(\theta_{1:2})}{Pr(x_{1:2})}
+$$
+
+```{r posterior}
+posterior <- 
+  joint %>%
+  filter(x1 == 2 & x2 == 1) %>%
+  mutate(denom = denominator) %>%
+  mutate(post = p/denom)
+
+posterior %>%
+  select(-c(n, prior1, prior2, num1, num2, p, lik1, lik2, p, denom)) %>%
+  knitr::kable(escape = FALSE)
+
+posterior %>%
+  summarise(sum(post))
+```
+
+Mean of $\theta_1$:
+
+$$
+E(\theta_1 \mid x_{1:2}, \theta_2) = \sum_{\theta_1} \theta_1 \sum_{\theta_2} Pr(\theta_{1}, \theta_2 \mid x_{1:2})
+$$
+
+```{r posterior mean}
+posterior_mean <- 
+  posterior %>%
+  group_by(theta1) %>%
+  summarise(partial = sum(post)) %>%
+  summarise(sum(theta1 * partial))
+
+posterior_mean
+```
+
+# The new coin in the block
