@@ -5,7 +5,7 @@ date: '2019-06-19'
 slug: the-bayesian-denominator-of-too-many-coin-flips
 categories: ['stats']
 tags: ['stats-101', 'book-lambert', 'lambert-chapter-6']
-draft: false
+draft: true
 output:
   blogdown::html_page:
     toc: true
@@ -139,8 +139,6 @@ joint <-
     prior2 = 1/2
   ) %>%
   mutate(
-    # lik1 = theta1 ** 2,
-    # lik2 = theta2 * (1 - theta2),
     lik1 = dbinom(x1, n, theta1),
     lik2 = dbinom(x2, n, theta2),
     num1 = lik1 * prior1,
