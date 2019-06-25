@@ -5,7 +5,7 @@ date: '2019-06-19'
 slug: the-bayesian-denominator-of-too-many-coin-flips
 categories: ['stats']
 tags: ['stats-101', 'book-lambert', 'lambert-chapter-6']
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true
