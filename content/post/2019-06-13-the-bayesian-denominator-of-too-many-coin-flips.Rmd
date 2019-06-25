@@ -25,8 +25,6 @@ theme_color = "#5D8AA8"
 
 Today we look at problem 6.1 _Too many coin flips_, from Ben Lambert's book _A Student's Guide to Bayesian Statistics_.
 
-We continue working with coins.
-
 This time around we have 2 coins, whose nature we are unsure about (probability of heads). However, we know that each coin $i$ can be fair ($\theta_i = 0.5$) or biased towards heads ($\theta_i = 0.9$).
 
 # A uniform start
@@ -51,9 +49,9 @@ Pr(X_{1:2}, \theta_{1:2}) = \prod_{i = 1}^{2} Pr(X_i, \theta_i) = \prod_{i = 1}^
 $$
 
 
-Note that, for each coin, we can write the joint ($Pr(X_i, \theta_i)$) as the product of the conditional distribution of the data given the parameters $Pr(X_i \mid \theta_i)$ and the distribution of the coin's identity ($Pr(\theta_i)$). Therefore, if we know how to calculate these two terms, then we can easily compute the whole thing:
+Note that, for each coin, we can write the joint $Pr(X_i, \theta_i)$ as the product of the conditional distribution of the data given the parameters $Pr(X_i \mid \theta_i)$ and the distribution of the coin's identity $Pr(\theta_i)$. Therefore, if we know how to calculate these two terms, then we can easily compute the whole thing:
 
-- given the coins identity, the binomial distribution can be used to model the outcome of $n$ independent coin flips (we've seen in a [previous post](/2019/06/05/bayesian-priors-and-dodgy-coins/)):
+- given the coins identity, the binomial distribution can be used to model the outcome of $n$ independent coin flips (we've seen this in a [previous post](/2019/06/05/bayesian-priors-and-dodgy-coins/)):
 
 $$
 Pr(x_i \mid \theta_i) = \binom{n}{x_i} \theta_{i}^{x_i}(1-\theta_{i})^{n-x_i}
@@ -67,7 +65,6 @@ $$
 Pr(\theta_i = 1) = 1/2 , \quad Pr(\theta_i = 2) = 1/2\\
 \end{align}
 $$
-
 
 ```{r joint, echo = FALSE, eval = FALSE}
 coins_tibble <- function(n, theta) {
@@ -122,7 +119,7 @@ l_joint
   summarise(sum(joint_p))
 ```
 
-And a little code to do the computation for us:
+The joint defines a probability distribution over all possible combinations of $X_1$, $X_2$, $\theta_1$ and $\theta_2$. Because the random variables are discrete, we can enumrate all the possible combinations and write a bit of code to do the computation for us. We can expect a total of $3 \times 3 \times 2 \times 2 = 36$ different probabilities:
 
 ```{r joint dist}
 joint <- 
@@ -134,7 +131,7 @@ joint <-
   ) %>%
   expand(x1, x2, theta1, theta2) %>%
   mutate(
-    n     = 2,
+    n      = 2,
     prior1 = 1/2,
     prior2 = 1/2
   ) %>%
@@ -149,28 +146,45 @@ joint <-
 ```
 
 ```{r joint table, echo = FALSE}
-joint %>%
-  select(-c(n, prior1, prior2, lik1, lik2, num1, num2)) %>%
-  knitr::kable(escape = FALSE)
-  # print(n = 36)
-  # pull(p) %>%
-  # matrix(
-  #   nrow = 3^2,
-  #   ncol = 2^2,
-  #   dimnames = list(
-  #     joint %>% unite("x1_x2", )
-  #   )) %>%
-  # knitr::kable(escape = FALSE)
+coln = joint %>% unite("x1x2", x1, x2, sep = ",") %>% pull(x1x2) %>% unique()
+rown = joint %>% unite("t1t2", theta1, theta2, sep = ",") %>% pull(t1t2) %>% unique()
+
+tabela <- 
+  joint %>%
+  pull(p) %>%
+  matrix(
+    nrow = 4,
+    ncol = 9,
+    dimnames = c(
+      list(rown, coln)
+    )
+  )
+
+tabela %>%
+  knitr::kable(escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
+  row_spec(0, bold = T, background = theme_color, color = "white", font_size = 15, align = "c") %>%
+  row_spec(c(1,3), bold = F, background = "#fafafa", font_size = 14) %>%
+  row_spec(c(2,4), bold = F, background = "transparent", font_size = 14) %>%
+  column_spec(1, bold = T, background = theme_color, color = "white") %>%
+  add_header_above(c("$\\theta_1,\\theta_2$", "X1,X2" = 9), escape = FALSE)
 ```
 
+---
+
 We can verify that the above distribution is a valid probability distribution:
+
 
 ```{r verify valid dist}
 joint %>%
   summarise(sum(p))
 ```
 
-# One likelihood to rule them all
+# One and only likelihood
+
+We now assume that we've observed $X_1 = 2$ and $X_2 = 1$. How likely is this data, given our _probability model_ of coin flips (binomial)?
+
+We can answer this question via the _likelihood_:
 
 $$
 \begin{align}
@@ -179,6 +193,9 @@ L(\theta_{1:2} \mid x_{1:2}) &= \prod_{i=1}^{2} L(\theta_i \mid x_i)\\
 &= Pr(X_1 = 2 \mid \theta_1) \times Pr(X_2 = 1 \mid \theta_2)
 \end{align}
 $$
+
+We bring out the _likelihood_ when we're presented with a single dataset. We fix the data $X_1 = x_1$, $X_2 = x_2$ and vary the parameters $\theta_1$ and $\theta_2$. **Note** that we've used the same expression, times the prior $Pr(\theta_i)$, to compute the joint; but that we did that for all possible datasets, i.e. combinations of $X_1$ and $X_2$!
+
 
 ```{r likelihood}
 likelihood <- 
@@ -189,12 +206,34 @@ likelihood <-
 
 likelihood %>%
   knitr::kable(escape = FALSE) %>%
-  row_spec(which.max(likelihood$lik), bold = T, color = "white", background = "red")
+  kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
+  row_spec(0, bold = T, background = theme_color, color = "white", font_size = 15, align = "c") %>%
+  row_spec(c(1,3), bold = F, background = "#fafafa", font_size = 14) %>%
+  row_spec(c(2,4), bold = F, background = "transparent", font_size = 14) %>%
+  row_spec(which.max(likelihood$lik), bold = T, color = "white", background = "red") %>%
+  column_spec(1:length(likelihood), width_min = "50pt")
+```
+</br></br></br>
+---
+
+Note that the likelihood is not a valid probability distribution:
+
+
+```{r likelihood not valid}
+likelihood %>%
+  summarise(sum(lik))
 ```
 
-The MLE for the parameters $\theta_1,\theta_2$ is the value of these parameters that maximises the likelihood: $\theta_1 = 0.9, \theta_2 = 0.5$.
+
+Now, if we were to select point estimates for $\theta_1,\theta_2$ (single values), we would probably choose the ones that maximise the likelihood. The _maximum likelihood estimator_ for the parameters can simply be determined by looking at the table above: $\theta_1 = 0.9, \theta_2 = 0.5$.
+
+The result makes sense intuitively: the model prefers coin 1 to be biased towards heads because it flipped heads twice and coin 2 to be fair as it flipped once heads and once tails. If we were approaching this problem from a frequentist point of view, our job would be done here. However, from a Bayesian perspective, we're just getting started.
 
 # The devil is in the denominator
+
+In Bayesian Statistics, it is often said that the _devil is in the denominator_. What is the denominator, or marginal likelihood, exactly?
+
+We can obtain the probability of the data $Pr_(x_1, x_2)$ by summing over all possible values of the parameters:
 
 $$
 \begin{align}
@@ -204,14 +243,26 @@ Pr(x_{1:2}) &= \sum_{\theta_1} \sum_{\theta_2} Pr(x_{1:2}, \theta_{1:2})\\
 \end{align}
 $$
 
-```{r denominator}
+This is equivalent to selecting the columns of the joint $X_1 = 2$ and $X_2 = 1$ and summing the probabilities for all values of $\theta_1$ and $\theta_2$.
+
+```{r numerator}
 numerator <- 
   joint %>%
   filter(x1 == 2 & x2 == 1)
+```
+
+```{r numerator table, echo = FALSE}
 
 numerator %>%
-  knitr::kable(escape = FALSE)
+  knitr::kable(escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
+  row_spec(0, bold = T, background = theme_color, color = "white", font_size = 15, align = "c") %>%
+  row_spec(c(1,3), bold = F, background = "#fafafa", font_size = 14) %>%
+  row_spec(c(2,4), bold = F, background = "transparent", font_size = 14) %>%
+  column_spec(1:length(numerator), width_min = "40pt")
+```
 
+```{r denominator}
 denominator <- 
   numerator %>%
   summarise(value = sum(p)) %>%
@@ -220,7 +271,11 @@ denominator <-
 denominator
 ```
 
-# Hey, Mr Postman!
+As, we'll see above, the job of the denominator is to ensure that the posterior distribution is a valid probability distribution.
+
+# The posterior
+
+The posterior aims to compute the update belief about the coin's identities, after we've observed the 2 coins flips for each coin. This is now trivial, since we've worked out all of its components: the _likelihood_, the _prior_ and the _denominator_:
 
 $$
 Pr(\theta_{1:2} \mid x_{1:2}) = \frac{L(\theta_{1:2} \mid x_{1:2}) \times Pr(\theta_{1:2})}{Pr(x_{1:2})}
@@ -234,14 +289,28 @@ posterior <-
   mutate(post = p/denom)
 
 posterior %>%
-  select(-c(n, prior1, prior2, num1, num2, p, lik1, lik2, p, denom)) %>%
-  knitr::kable(escape = FALSE)
+  select(-c(n, prior1, prior2, num1, num2, lik1, lik2, p, denom)) %>%
+  mutate(post = format(post, digits = 3)) %>%
+  knitr::kable(escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("stripped", "hover"), full_width = T, position = "float_left") %>%
+  row_spec(0, bold = T, background = theme_color, color = "white", font_size = 15, align = "c") %>%
+  row_spec(c(1,3), bold = F, background = "#fafafa", font_size = 14) %>%
+  row_spec(c(2,4), bold = F, background = "transparent", font_size = 14) %>%
+  column_spec(1:(length(posterior)-9), width_min = "40pt")
+```
+<br/><br/><br/>
 
+---
+
+
+We can verify that the posterior is a valid probability distribution:
+
+```{r posterior valid}
 posterior %>%
   summarise(sum(post))
 ```
 
-Mean of $\theta_1$:
+As before, we now may want to compute point estimates for our parameters. In this case, we're interested in the mean of $\theta_1$. In the univariate case, this is simply a weighted average over the posterior: $E(\theta \mid x) = \sum_{\theta} \theta . Pr(\theta \mid x)$ In this case, we need to first sum the posterior over $\theta_2$:
 
 $$
 E(\theta_1 \mid x_{1:2}, \theta_2) = \sum_{\theta_1} \theta_1 \sum_{\theta_2} Pr(\theta_{1}, \theta_2 \mid x_{1:2})
@@ -257,4 +326,4 @@ posterior_mean <-
 posterior_mean
 ```
 
-# The new coin in the block
+And despite the result not falling into one of the two possible values for the coins identity, the mean is definetely pointing towards the coin being biased in the favour of heads.

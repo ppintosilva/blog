@@ -17,17 +17,17 @@ output:
 <ul>
 <li><a href="#the-problem">The problem</a></li>
 <li><a href="#a-uniform-start">A uniform start</a></li>
-<li><a href="#one-likelihood-to-rule-them-all">One likelihood to rule them all</a></li>
+<li><a href="#one-and-only-likelihood">One and only likelihood</a><ul>
+<li><a href="#section"></br></br></br></a></li>
+</ul></li>
 <li><a href="#the-devil-is-in-the-denominator">The devil is in the denominator</a></li>
-<li><a href="#hey-mr-postman">Hey, Mr Postman!</a></li>
-<li><a href="#the-new-coin-in-the-block">The new coin in the block</a></li>
+<li><a href="#the-posterior">The posterior</a></li>
 </ul>
 </div>
 
 <div id="the-problem" class="section level1">
 <h1>The problem</h1>
 <p>Today we look at problem 6.1 <em>Too many coin flips</em>, from Ben Lambert’s book <em>A Student’s Guide to Bayesian Statistics</em>.</p>
-<p>We continue working with coins.</p>
 <p>This time around we have 2 coins, whose nature we are unsure about (probability of heads). However, we know that each coin <span class="math inline">\(i\)</span> can be fair (<span class="math inline">\(\theta_i = 0.5\)</span>) or biased towards heads (<span class="math inline">\(\theta_i = 0.9\)</span>).</p>
 </div>
 <div id="a-uniform-start" class="section level1">
@@ -46,9 +46,9 @@ Pr(X_1, X_2, \theta_1, \theta_2) = Pr(X_{1:2}, \theta_{1:2})
 <p><span class="math display">\[
 Pr(X_{1:2}, \theta_{1:2}) = \prod_{i = 1}^{2} Pr(X_i, \theta_i) = \prod_{i = 1}^{2} Pr(X_i \mid \theta_i) \times Pr(\theta_i)
 \]</span></p>
-<p>Note that, for each coin, we can write the joint (<span class="math inline">\(Pr(X_i, \theta_i)\)</span>) as the product of the conditional distribution of the data given the parameters <span class="math inline">\(Pr(X_i \mid \theta_i)\)</span> and the distribution of the coin’s identity (<span class="math inline">\(Pr(\theta_i)\)</span>). Therefore, if we know how to calculate these two terms, then we can easily compute the whole thing:</p>
+<p>Note that, for each coin, we can write the joint <span class="math inline">\(Pr(X_i, \theta_i)\)</span> as the product of the conditional distribution of the data given the parameters <span class="math inline">\(Pr(X_i \mid \theta_i)\)</span> and the distribution of the coin’s identity <span class="math inline">\(Pr(\theta_i)\)</span>. Therefore, if we know how to calculate these two terms, then we can easily compute the whole thing:</p>
 <ul>
-<li>given the coins identity, the binomial distribution can be used to model the outcome of <span class="math inline">\(n\)</span> independent coin flips (we’ve seen in a <a href="/2019/06/05/bayesian-priors-and-dodgy-coins/">previous post</a>):</li>
+<li>given the coins identity, the binomial distribution can be used to model the outcome of <span class="math inline">\(n\)</span> independent coin flips (we’ve seen this in a <a href="/2019/06/05/bayesian-priors-and-dodgy-coins/">previous post</a>):</li>
 </ul>
 <p><span class="math display">\[
 Pr(x_i \mid \theta_i) = \binom{n}{x_i} \theta_{i}^{x_i}(1-\theta_{i})^{n-x_i}
@@ -61,7 +61,7 @@ Pr(x_i \mid \theta_i) = \binom{n}{x_i} \theta_{i}^{x_i}(1-\theta_{i})^{n-x_i}
 Pr(\theta_i = 1) = 1/2 , \quad Pr(\theta_i = 2) = 1/2\\
 \end{align}
 \]</span></p>
-<p>And a little code to do the computation for us:</p>
+<p>The joint defines a probability distribution over all possible combinations of <span class="math inline">\(X_1\)</span>, <span class="math inline">\(X_2\)</span>, <span class="math inline">\(\theta_1\)</span> and <span class="math inline">\(\theta_2\)</span>. Because the random variables are discrete, we can enumrate all the possible combinations and write a bit of code to do the computation for us. We can expect a total of <span class="math inline">\(3 \times 3 \times 2 \times 2 = 36\)</span> different probabilities:</p>
 <pre class="r"><code>joint &lt;- 
   tibble(
     x1     = c(0, 1, 2),
@@ -71,7 +71,7 @@ Pr(\theta_i = 1) = 1/2 , \quad Pr(\theta_i = 2) = 1/2\\
   ) %&gt;%
   expand(x1, x2, theta1, theta2) %&gt;%
   mutate(
-    n     = 2,
+    n      = 2,
     prior1 = 1/2,
     prior2 = 1/2
   ) %&gt;%
@@ -82,641 +82,184 @@ Pr(\theta_i = 1) = 1/2 , \quad Pr(\theta_i = 2) = 1/2\\
     num2 = lik2 * prior2,
   ) %&gt;%
   mutate(p = num1 * num2)</code></pre>
-<table>
+<table class="table table-hover" style="float: left; margin-right: 10px;">
 <thead>
 <tr>
-<th style="text-align:right;">
-x1
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="1">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+<span class="math inline">\(\theta_1,\theta_2\)</span>
+</div>
 </th>
-<th style="text-align:right;">
-x2
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="9">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+X1,X2
+</div>
 </th>
-<th style="text-align:right;">
-theta1
+</tr>
+<tr>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 </th>
-<th style="text-align:right;">
-theta2
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+0,0
 </th>
-<th style="text-align:right;">
-p
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+0,1
+</th>
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+0,2
+</th>
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+1,0
+</th>
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+1,1
+</th>
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+1,2
+</th>
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+2,0
+</th>
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+2,1
+</th>
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
+2,2
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:right;">
-0
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;">
+0.5,0.5
 </td>
-<td style="text-align:right;">
-0
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.015625
 </td>
-<td style="text-align:right;">
-0.5
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.03125
 </td>
-<td style="text-align:right;">
-0.5
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.015625
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.03125
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.0625
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.03125
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.015625
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.03125
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
 0.015625
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
-0
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;">
+0.5,0.9
 </td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
 0.000625
+</td>
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.01125
+</td>
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.050625
+</td>
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.00125
+</td>
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.0225
+</td>
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.10125
+</td>
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.000625
+</td>
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.01125
+</td>
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.050625
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
-0
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;">
+0.9,0.5
 </td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
 0.000625
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.00125
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.000625
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.01125
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.0225
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.01125
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.050625
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.10125
+</td>
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;">
+0.050625
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
-0
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;">
+0.9,0.9
 </td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
 0.000025
 </td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.00045
 </td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.031250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.011250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.001250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.000450
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.015625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.050625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.000625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
 0.002025
 </td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.00045
 </td>
-<td style="text-align:right;">
-0
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.0081
 </td>
-<td style="text-align:right;">
-0.5
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.03645
 </td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.031250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.001250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.011250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.000450
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.062500
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.022500
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.022500
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.008100
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.031250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.101250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.011250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.036450
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.015625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.000625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.050625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
 0.002025
 </td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
+0.03645
 </td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.031250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.011250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.101250
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.036450
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.015625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.050625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.5
-</td>
-<td style="text-align:right;">
-0.050625
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
-0.9
-</td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;">
 0.164025
 </td>
 </tr>
 </tbody>
 </table>
+<hr />
 <p>We can verify that the above distribution is a valid probability distribution:</p>
 <pre class="r"><code>joint %&gt;%
   summarise(sum(p))</code></pre>
@@ -725,8 +268,10 @@ p
 ##      &lt;dbl&gt;
 ## 1    1.000</code></pre>
 </div>
-<div id="one-likelihood-to-rule-them-all" class="section level1">
-<h1>One likelihood to rule them all</h1>
+<div id="one-and-only-likelihood" class="section level1">
+<h1>One and only likelihood</h1>
+<p>We now assume that we’ve observed <span class="math inline">\(X_1 = 2\)</span> and <span class="math inline">\(X_2 = 1\)</span>. How likely is this data, given our <em>probability model</em> of coin flips (binomial)?</p>
+<p>We can answer this question via the <em>likelihood</em>:</p>
 <p><span class="math display">\[
 \begin{align}
 L(\theta_{1:2} \mid x_{1:2}) &amp;= \prod_{i=1}^{2} L(\theta_i \mid x_i)\\
@@ -734,6 +279,7 @@ L(\theta_{1:2} \mid x_{1:2}) &amp;= \prod_{i=1}^{2} L(\theta_i \mid x_i)\\
 &amp;= Pr(X_1 = 2 \mid \theta_1) \times Pr(X_2 = 1 \mid \theta_2)
 \end{align}
 \]</span></p>
+<p>We bring out the <em>likelihood</em> when we’re presented with a single dataset. We fix the data <span class="math inline">\(X_1 = x_1\)</span>, <span class="math inline">\(X_2 = x_2\)</span> and vary the parameters <span class="math inline">\(\theta_1\)</span> and <span class="math inline">\(\theta_2\)</span>. <strong>Note</strong> that we’ve used the same expression, times the prior <span class="math inline">\(Pr(\theta_i)\)</span>, to compute the joint; but that we did that for all possible datasets, i.e. combinations of <span class="math inline">\(X_1\)</span> and <span class="math inline">\(X_2\)</span>!</p>
 <pre class="r"><code>likelihood &lt;- 
   joint %&gt;%
   filter(x1 == 2 &amp; x2 == 1) %&gt;%
@@ -742,132 +288,150 @@ L(\theta_{1:2} \mid x_{1:2}) &amp;= \prod_{i=1}^{2} L(\theta_i \mid x_i)\\
 
 likelihood %&gt;%
   knitr::kable(escape = FALSE) %&gt;%
-  row_spec(which.max(likelihood$lik), bold = T, color = &quot;white&quot;, background = &quot;red&quot;)</code></pre>
-<table>
+  kable_styling(bootstrap_options = c(&quot;stripped&quot;, &quot;hover&quot;), full_width = T, position = &quot;float_left&quot;) %&gt;%
+  row_spec(0, bold = T, background = theme_color, color = &quot;white&quot;, font_size = 15, align = &quot;c&quot;) %&gt;%
+  row_spec(c(1,3), bold = F, background = &quot;#fafafa&quot;, font_size = 14) %&gt;%
+  row_spec(c(2,4), bold = F, background = &quot;transparent&quot;, font_size = 14) %&gt;%
+  row_spec(which.max(likelihood$lik), bold = T, color = &quot;white&quot;, background = &quot;red&quot;) %&gt;%
+  column_spec(1:length(likelihood), width_min = &quot;50pt&quot;)</code></pre>
+<table class="table table-hover" style="float: left; margin-right: 10px;">
 <thead>
 <tr>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 x1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 x2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 theta1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 theta2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 lik1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 lik2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 lik
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 50pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 50pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 50pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 50pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 50pt; ">
 0.25
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 50pt; ">
 0.50
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 50pt; ">
 0.1250
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.25
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.18
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.0450
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: red !important;min-width: 50pt; ">
 2
 </td>
-<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: red !important;min-width: 50pt; ">
 1
 </td>
-<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: red !important;min-width: 50pt; ">
 0.9
 </td>
-<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: red !important;min-width: 50pt; ">
 0.5
 </td>
-<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: red !important;min-width: 50pt; ">
 0.81
 </td>
-<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: red !important;min-width: 50pt; ">
 0.50
 </td>
-<td style="text-align:right;font-weight: bold;color: white !important;background-color: red !important;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;font-weight: bold;color: white !important;background-color: red !important;min-width: 50pt; ">
 0.4050
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.81
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.18
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 50pt; ">
 0.1458
 </td>
 </tr>
 </tbody>
 </table>
-<p>The MLE for the parameters <span class="math inline">\(\theta_1,\theta_2\)</span> is the value of these parameters that maximises the likelihood: <span class="math inline">\(\theta_1 = 0.9, \theta_2 = 0.5\)</span>.</p>
+<div id="section" class="section level2">
+<h2></br></br></br></h2>
+<p>Note that the likelihood is not a valid probability distribution:</p>
+<pre class="r"><code>likelihood %&gt;%
+  summarise(sum(lik))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `sum(lik)`
+##        &lt;dbl&gt;
+## 1      0.721</code></pre>
+<p>Now, if we were to select point estimates for <span class="math inline">\(\theta_1,\theta_2\)</span> (single values), we would probably choose the ones that maximise the likelihood. The <em>maximum likelihood estimator</em> for the parameters can simply be determined by looking at the table above: <span class="math inline">\(\theta_1 = 0.9, \theta_2 = 0.5\)</span>.</p>
+<p>The result makes sense intuitively: the model prefers coin 1 to be biased towards heads because it flipped heads twice and coin 2 to be fair as it flipped once heads and once tails. If we were approaching this problem from a frequentist point of view, our job would be done here. However, from a Bayesian perspective, we’re just getting started.</p>
+</div>
 </div>
 <div id="the-devil-is-in-the-denominator" class="section level1">
 <h1>The devil is in the denominator</h1>
+<p>In Bayesian Statistics, it is often said that the <em>devil is in the denominator</em>. What is the denominator, or marginal likelihood, exactly?</p>
+<p>We can obtain the probability of the data <span class="math inline">\(Pr_(x_1, x_2)\)</span> by summing over all possible values of the parameters:</p>
 <p><span class="math display">\[
 \begin{align}
 Pr(x_{1:2}) &amp;= \sum_{\theta_1} \sum_{\theta_2} Pr(x_{1:2}, \theta_{1:2})\\
@@ -875,203 +439,201 @@ Pr(x_{1:2}) &amp;= \sum_{\theta_1} \sum_{\theta_2} Pr(x_{1:2}, \theta_{1:2})\\
 &amp;= \sum_{\theta_1}Pr(x_1 \mid \theta_1)Pr(\theta_1) \sum_{\theta_2} Pr(x_2 \mid \theta_2)Pr(\theta_2)
 \end{align}
 \]</span></p>
+<p>This is equivalent to selecting the columns of the joint <span class="math inline">\(X_1 = 2\)</span> and <span class="math inline">\(X_2 = 1\)</span> and summing the probabilities for all values of <span class="math inline">\(\theta_1\)</span> and <span class="math inline">\(\theta_2\)</span>.</p>
 <pre class="r"><code>numerator &lt;- 
   joint %&gt;%
-  filter(x1 == 2 &amp; x2 == 1)
-
-numerator %&gt;%
-  knitr::kable(escape = FALSE)</code></pre>
-<table>
+  filter(x1 == 2 &amp; x2 == 1)</code></pre>
+<table class="table table-hover" style="float: left; margin-right: 10px;">
 <thead>
 <tr>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 x1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 x2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 theta1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 theta2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 n
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 prior1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 prior2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 lik1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 lik2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 num1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 num2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 p
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.25
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.50
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.125
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.25
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.03125
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.25
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.18
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.125
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.09
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.01125
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.81
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.50
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.405
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.25
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.10125
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.81
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.18
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.405
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.09
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.03645
 </td>
 </tr>
@@ -1084,9 +646,11 @@ p
 
 denominator</code></pre>
 <pre><code>## [1] 0.1802</code></pre>
+<p>As, we’ll see above, the job of the denominator is to ensure that the posterior distribution is a valid probability distribution.</p>
 </div>
-<div id="hey-mr-postman" class="section level1">
-<h1>Hey, Mr Postman!</h1>
+<div id="the-posterior" class="section level1">
+<h1>The posterior</h1>
+<p>The posterior aims to compute the update belief about the coin’s identities, after we’ve observed the 2 coins flips for each coin. This is now trivial, since we’ve worked out all of its components: the <em>likelihood</em>, the <em>prior</em> and the <em>denominator</em>:</p>
 <p><span class="math display">\[
 Pr(\theta_{1:2} \mid x_{1:2}) = \frac{L(\theta_{1:2} \mid x_{1:2}) \times Pr(\theta_{1:2})}{Pr(x_{1:2})}
 \]</span></p>
@@ -1097,106 +661,115 @@ Pr(\theta_{1:2} \mid x_{1:2}) = \frac{L(\theta_{1:2} \mid x_{1:2}) \times Pr(\th
   mutate(post = p/denom)
 
 posterior %&gt;%
-  select(-c(n, prior1, prior2, num1, num2, p, lik1, lik2, p, denom)) %&gt;%
-  knitr::kable(escape = FALSE)</code></pre>
-<table>
+  select(-c(n, prior1, prior2, num1, num2, lik1, lik2, p, denom)) %&gt;%
+  mutate(post = format(post, digits = 3)) %&gt;%
+  knitr::kable(escape = FALSE) %&gt;%
+  kable_styling(bootstrap_options = c(&quot;stripped&quot;, &quot;hover&quot;), full_width = T, position = &quot;float_left&quot;) %&gt;%
+  row_spec(0, bold = T, background = theme_color, color = &quot;white&quot;, font_size = 15, align = &quot;c&quot;) %&gt;%
+  row_spec(c(1,3), bold = F, background = &quot;#fafafa&quot;, font_size = 14) %&gt;%
+  row_spec(c(2,4), bold = F, background = &quot;transparent&quot;, font_size = 14) %&gt;%
+  column_spec(1:(length(posterior)-9), width_min = &quot;40pt&quot;)</code></pre>
+<table class="table table-hover" style="float: left; margin-right: 10px;">
 <thead>
 <tr>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 x1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 x2
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 theta1
 </th>
-<th style="text-align:right;">
+<th style="text-align:right;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 theta2
 </th>
-<th style="text-align:right;">
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: #5D8AA8 !important;text-align: center;font-size: 15px;">
 post
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
-0.1734184
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
+0.1734
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.9
 </td>
-<td style="text-align:right;">
-0.0624306
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
+0.0624
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
 0.5
 </td>
-<td style="text-align:right;">
-0.5618757
+<td style="text-align:left;background-color: #fafafa !important;font-size: 14px;min-width: 40pt; ">
+0.5619
 </td>
 </tr>
 <tr>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 2
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 1
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.9
 </td>
-<td style="text-align:right;">
+<td style="text-align:right;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
 0.9
 </td>
-<td style="text-align:right;">
-0.2022752
+<td style="text-align:left;background-color: transparent !important;font-size: 14px;min-width: 40pt; ">
+0.2023
 </td>
 </tr>
 </tbody>
 </table>
+<p><br/><br/><br/></p>
+<hr />
+<p>We can verify that the posterior is a valid probability distribution:</p>
 <pre class="r"><code>posterior %&gt;%
   summarise(sum(post))</code></pre>
 <pre><code>## # A tibble: 1 x 1
 ##   `sum(post)`
 ##         &lt;dbl&gt;
 ## 1           1</code></pre>
-<p>Mean of <span class="math inline">\(\theta_1\)</span>:</p>
+<p>As before, we now may want to compute point estimates for our parameters. In this case, we’re interested in the mean of <span class="math inline">\(\theta_1\)</span>. In the univariate case, this is simply a weighted average over the posterior: <span class="math inline">\(E(\theta \mid x) = \sum_{\theta} \theta . Pr(\theta \mid x)\)</span> In this case, we need to first sum the posterior over <span class="math inline">\(\theta_2\)</span>:</p>
 <p><span class="math display">\[
 E(\theta_1 \mid x_{1:2}, \theta_2) = \sum_{\theta_1} \theta_1 \sum_{\theta_2} Pr(\theta_{1}, \theta_2 \mid x_{1:2})
 \]</span></p>
@@ -1211,7 +784,5 @@ posterior_mean</code></pre>
 ##   `sum(theta1 * partial)`
 ##                     &lt;dbl&gt;
 ## 1                   0.806</code></pre>
-</div>
-<div id="the-new-coin-in-the-block" class="section level1">
-<h1>The new coin in the block</h1>
+<p>And despite the result not falling into one of the two possible values for the coins identity, the mean is definetely pointing towards the coin being biased in the favour of heads.</p>
 </div>
