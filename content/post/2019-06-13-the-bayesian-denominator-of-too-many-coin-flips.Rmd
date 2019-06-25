@@ -213,7 +213,9 @@ likelihood %>%
   row_spec(which.max(likelihood$lik), bold = T, color = "white", background = "red") %>%
   column_spec(1:length(likelihood), width_min = "50pt")
 ```
+
 </br></br></br>
+
 ---
 
 Note that the likelihood is not a valid probability distribution:

@@ -17,9 +17,7 @@ output:
 <ul>
 <li><a href="#the-problem">The problem</a></li>
 <li><a href="#a-uniform-start">A uniform start</a></li>
-<li><a href="#one-and-only-likelihood">One and only likelihood</a><ul>
-<li><a href="#section"></br></br></br></a></li>
-</ul></li>
+<li><a href="#one-and-only-likelihood">One and only likelihood</a></li>
 <li><a href="#the-devil-is-in-the-denominator">The devil is in the denominator</a></li>
 <li><a href="#the-posterior">The posterior</a></li>
 </ul>
@@ -415,8 +413,8 @@ lik
 </tr>
 </tbody>
 </table>
-<div id="section" class="section level2">
-<h2></br></br></br></h2>
+<p></br></br></br></p>
+<hr />
 <p>Note that the likelihood is not a valid probability distribution:</p>
 <pre class="r"><code>likelihood %&gt;%
   summarise(sum(lik))</code></pre>
@@ -426,7 +424,6 @@ lik
 ## 1      0.721</code></pre>
 <p>Now, if we were to select point estimates for <span class="math inline">\(\theta_1,\theta_2\)</span> (single values), we would probably choose the ones that maximise the likelihood. The <em>maximum likelihood estimator</em> for the parameters can simply be determined by looking at the table above: <span class="math inline">\(\theta_1 = 0.9, \theta_2 = 0.5\)</span>.</p>
 <p>The result makes sense intuitively: the model prefers coin 1 to be biased towards heads because it flipped heads twice and coin 2 to be fair as it flipped once heads and once tails. If we were approaching this problem from a frequentist point of view, our job would be done here. However, from a Bayesian perspective, we’re just getting started.</p>
-</div>
 </div>
 <div id="the-devil-is-in-the-denominator" class="section level1">
 <h1>The devil is in the denominator</h1>
